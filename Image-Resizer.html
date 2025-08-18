@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Resizer - Fixed & Upgraded</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1a1a1a;
+            --accent-color: #d4af37; /* Gold Accent */
+            --background-color-start: #111111;
+            --background-color-end: #222222;
+            --card-background: rgba(26, 26, 26, 0.6); /* Frosted Glass Effect */
+            --text-color: #f0f0f0;
+            --light-text-color: #a0a0a0;
+            --border-color: rgba(212, 175, 55, 0.3);
+            --shadow-light: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-image: linear-gradient(to right, var(--background-color-start), var(--background-color-end)), url('https://images.unsplash.com/photo-1553356084-58ef4a67b2a7?q=80&w=1974&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: var(--card-background);
+            /* Frosted glass effect - kuch purane browser par shayad support na kare */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-light);
+            padding: 2.5rem 3rem;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        p.subtitle {
+            color: var(--light-text-color);
+            margin-bottom: 2.5rem;
+            font-weight: 300;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--accent-color);
+            display: block;
+            margin-bottom: 0.6rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .upload-box {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-box:hover {
+            border-color: var(--accent-color);
+            background-color: rgba(212, 175, 55, 0.05);
+        }
+
+        input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-text {
+            color: var(--light-text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .upload-text svg {
+            width: 30px;
+            height: 30px;
+            fill: var(--light-text-color);
+            transition: fill 0.3s ease;
+        }
+        
+        .upload-box:hover .upload-text svg {
+            fill: var(--accent-color);
+        }
+
+        .input-field-group {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .input-wrapper {
+            flex: 1;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1rem;
+            color: var(--text-color);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+            outline: none;
+        }
+
+        input::placeholder {
+            color: #666;
+        }
+
+        .btn {
+            background: var(--accent-color);
+            color: var(--primary-color);
+            padding: 0.9rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .btn:hover {
+            background-color: #c8a430;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .btn:disabled {
+            background-color: #555;
+            color: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        canvas {
+            max-width: 100%;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-top: 3rem;
+            display: none; 
+        }
+
+        .download-container {
+            margin-top: 2.5rem;
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 2rem 1.5rem;
+            }
+            .input-field-group {
+                flex-direction: column;
+                gap: 1.5rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Resizer </h1>
+        <p class="subtitle">Resize your images with a touch of luxury.</p>
+
+        <div class="form-group">
+            <label for="upload">Upload Image</label>
+            <div class="upload-box">
+                <input type="file" id="upload" accept="image/*" />
+                <div class="upload-text">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+                    <span id="fileName">Click or drag file to upload</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group input-field-group">
+            <div class="input-wrapper">
+                <label for="width">Width (px)</label>
+                <input type="number" id="width" placeholder="e.g., 1920" />
+            </div>
+            <div class="input-wrapper">
+                <label for="height">Height (px)</label>
+                <input type="number" id="height" placeholder="e.g., 1080" />
+            </div>
+        </div>
+
+        <button class="btn" id="resizeBtn" onclick="resizeImage()" disabled>Resize & Generate</button>
+        
+        <canvas id="canvas"></canvas>
+        
+        <div class="download-container" id="download-container">
+            <a id="downloadLink" class="btn" download="resized-image.png" style="text-decoration: none; display: block; margin-top: 0;">
+                Download Resized Image
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // --- YAHAN SE UPDATED JAVASCRIPT SHURU HOTA HAI ---
+
+        const uploadInput = document.getElementById('upload');
+        const fileNameSpan = document.getElementById('fileName');
+        const resizeBtn = document.getElementById('resizeBtn');
+        const widthInput = document.getElementById('width');
+        const heightInput = document.getElementById('height');
+        
+        let originalImage = new Image();
+        let isImageLoaded = false;
+
+        uploadInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                fileNameSpan.textContent = "Click or drag file to upload";
+                isImageLoaded = false;
+                resizeBtn.disabled = true; // Button ko disable rakho
+                return;
+            }
+
+            fileNameSpan.textContent = file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                originalImage.src = e.target.result;
+                
+                // --- YAHI HAI GLITCH FIX aur NAYA FEATURE ---
+                // Image ke poora load hone ka intezar karo
+                originalImage.onload = function() {
+                    // Ab image ready hai, uski original dimensions input mein daal do
+                    widthInput.value = this.naturalWidth;
+                    heightInput.value = this.naturalHeight;
+                    
+                    isImageLoaded = true;
+                    resizeBtn.disabled = false; // Ab button ko enable kar do
+                };
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function resizeImage() {
+            const width = parseInt(widthInput.value);
+            const height = parseInt(heightInput.value);
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const downloadContainer = document.getElementById('download-container');
+            const downloadLink = document.getElementById('downloadLink');
+
+            if (!isImageLoaded) {
+                alert("Please wait for the image to load completely.");
+                return;
+            }
+
+            if (!width || !height || isNaN(width) || isNaN(height)) {
+                alert("Please enter valid width and height.");
+                return;
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style.display = 'block';
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(originalImage, 0, 0, width, height);
+
+            downloadLink.href = canvas.toDataURL("image/png");
+            downloadContainer.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
