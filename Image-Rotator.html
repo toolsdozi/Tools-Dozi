@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Rotator & Flipper</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-color: #00d1b2;
+      --background-color-dark: #1e1e1e;
+      --surface-color: #2a2a2a;
+      --text-color: #e0e0e0;
+      --border-color: #444;
+      --shadow-color-dark: rgba(0, 0, 0, 0.4);
+      --shadow-color-light: rgba(50, 50, 50, 0.3);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--background-color-dark);
+      background-image: radial-gradient(circle at top, #333 0%, #1a1a1a 100%);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      background-color: var(--surface-color);
+      border-radius: 20px;
+      padding: 35px;
+      box-shadow: 0 10px 40px var(--shadow-color-dark);
+      text-align: center;
+      border: 1px solid var(--border-color);
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    h1 {
+      color: var(--text-color);
+      margin-top: 0;
+      margin-bottom: 30px;
+      font-weight: 600;
+      font-size: 2rem;
+    }
+
+    /* Upload Area */
+    .upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 15px;
+      padding: 40px 20px;
+      cursor: pointer;
+      transition: background-color 0.3s, border-color 0.3s;
+      margin-bottom: 30px;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      background-color: #333;
+      border-color: var(--primary-color);
+    }
+    .upload-area p {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #aaa;
+    }
+     .upload-area p strong {
+        color: var(--text-color);
+     }
+    .upload-area i {
+      font-size: 3rem;
+      color: var(--primary-color);
+      margin-bottom: 15px;
+    }
+    #image-upload {
+      display: none;
+    }
+
+    /* Image Workspace */
+    .image-workspace {
+      display: none;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    .preview-container {
+      margin: 20px auto 30px auto;
+      background-color: var(--background-color-dark);
+      border-radius: 15px;
+      overflow: hidden;
+      padding: 15px;
+      border: 1px solid #111;
+      box-shadow: inset 0 4px 10px rgba(0,0,0,0.5);
+    }
+    #image-preview {
+      max-width: 100%;
+      max-height: 400px;
+      transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .controls-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .control-button {
+      background: #333;
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 12px 15px;
+      cursor: pointer;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.2s ease-in-out;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .control-button:hover {
+      background: #3a3a3a;
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px var(--shadow-color-dark);
+    }
+    .control-button i {
+      font-size: 1.1em;
+    }
+
+    #download-button {
+      width: 100%;
+      background-color: var(--primary-color);
+      color: #000;
+      font-weight: 600;
+      border: none;
+      padding: 16px 20px;
+      font-size: 1.2rem;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      font-family: 'Poppins', sans-serif;
+    }
+    #download-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(0, 209, 178, 0.2);
+    }
+    #download-button:disabled {
+        cursor: not-allowed;
+        background-color: #555;
+        color: #999;
+    }
+    #download-button .fa-spinner {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Image Rotator & Flipper</h1>
+    
+    <div id="upload-container">
+      <label for="image-upload" id="upload-area" class="upload-area">
+        <i class="fas fa-file-image"></i>
+        <p><strong>Drag & Drop Image Here</strong><br>or Click to Upload</p>
+      </label>
+      <input type="file" id="image-upload" accept="image/*">
+    </div>
+
+    <div id="image-workspace" class="image-workspace">
+      <div class="preview-container">
+        <img id="image-preview" src="" alt="Image Preview" />
+      </div>
+
+      <div class="controls-panel">
+        <button id="rotate-left" class="control-button"><i class="fas fa-rotate-left"></i> Left</button>
+        <button id="rotate-right" class="control-button"><i class="fas fa-rotate-right"></i> Right</button>
+        <button id="flip-horizontal" class="control-button"><i class="fas fa-arrows-left-right"></i> Horizontal</button>
+        <button id="flip-vertical" class="control-button"><i class="fas fa-arrows-up-down"></i> Vertical</button>
+        <button id="reset" class="control-button"><i class="fas fa-undo"></i> Reset</button>
+      </div>
+
+      <div class="download">
+        <button id="download-button">
+          <span class="btn-text"><i class="fas fa-download"></i> Download Image</span>
+        </button>
+        <a id="download-link" style="display: none;"></a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // DOM Elements
+      const uploadContainer = document.getElementById('upload-container');
+      const uploadArea = document.getElementById('upload-area');
+      const imageUpload = document.getElementById('image-upload');
+      const imageWorkspace = document.getElementById('image-workspace');
+      const imagePreview = document.getElementById('image-preview');
+      const downloadButton = document.getElementById('download-button');
+      const downloadButtonText = downloadButton.querySelector('.btn-text');
+      const downloadLink = document.getElementById('download-link');
+      
+      // Control Buttons
+      const controlButtons = document.querySelectorAll('.control-button');
+      
+      // State variables
+      let rotation = 0;
+      let scaleX = 1;
+      let scaleY = 1;
+      let originalImageSrc = '';
+      let originalFileName = '';
+
+      // --- File Handling ---
+      const handleFile = (file) => {
+        if (file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            originalImageSrc = e.target.result;
+            originalFileName = file.name;
+            imagePreview.src = originalImageSrc;
+            resetTransformations();
+            uploadContainer.style.display = 'none';
+            imageWorkspace.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          alert('Please select a valid image file.');
+        }
+      };
+
+      imageUpload.addEventListener('change', (e) => handleFile(e.target.files[0]));
+      
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+          uploadArea.addEventListener(eventName, e => {
+              e.preventDefault();
+              e.stopPropagation();
+          });
+      });
+      uploadArea.addEventListener('dragover', () => uploadArea.classList.add('dragover'));
+      uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+      uploadArea.addEventListener('drop', (e) => {
+        uploadArea.classList.remove('dragover');
+        handleFile(e.dataTransfer.files[0]);
+      });
+
+      // --- Image Transformations ---
+      const updatePreview = () => {
+        imagePreview.style.transform = `rotate(${rotation}deg) scaleX(${scaleX}) scaleY(${scaleY})`;
+      };
+
+      const resetTransformations = () => {
+        rotation = 0;
+        scaleX = 1;
+        scaleY = 1;
+        updatePreview();
+      };
+      
+      controlButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          switch(button.id) {
+            case 'rotate-left': rotation -= 90; break;
+            case 'rotate-right': rotation += 90; break;
+            case 'flip-horizontal': scaleX *= -1; break;
+            case 'flip-vertical': scaleY *= -1; break;
+            case 'reset': resetTransformations(); return;
+          }
+          updatePreview();
+        });
+      });
+      
+      // --- Download Logic ---
+      downloadButton.addEventListener('click', () => {
+        if (!originalImageSrc) return;
+
+        downloadButton.disabled = true;
+        downloadButtonText.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = originalImageSrc;
+
+        img.onload = () => {
+          const w = img.width;
+          const h = img.height;
+          const absRotation = Math.abs(rotation % 360);
+
+          canvas.width = (absRotation === 90 || absRotation === 270) ? h : w;
+          canvas.height = (absRotation === 90 || absRotation === 270) ? w : h;
+
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate(rotation * Math.PI / 180);
+          ctx.scale(scaleX, scaleY);
+          ctx.drawImage(img, -w / 2, -h / 2);
+          
+          const baseName = originalFileName.split('.').slice(0, -1).join('.') || 'download';
+          downloadLink.download = `${baseName}-edited.png`;
+          
+          downloadLink.href = canvas.toDataURL("image/png");
+          downloadLink.click();
+          
+          setTimeout(() => {
+            downloadButton.disabled = false;
+            downloadButtonText.innerHTML = '<i class="fas fa-download"></i> Download Image';
+          }, 500);
+        };
+        img.onerror = () => {
+            alert('Failed to load image for processing.');
+            downloadButton.disabled = false;
+            downloadButtonText.innerHTML = '<i class="fas fa-download"></i> Download Image';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
