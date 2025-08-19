@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Premium Age Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(90deg, #FDBB2D 0%, #D4AF37 50%, #B8860B 100%);
+      --background-start: #0F0C29; --background-mid: #302B63; --background-end: #24243E;
+      --surface-color: rgba(26, 26, 42, 0.85); --text-color: #E0E0E0; --text-muted-color: #A0A0A0;
+      --border-color: rgba(255, 215, 0, 0.2); --success-color: #00C851;
+      --border-radius: 16px; --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: 'Inter', sans-serif; color: var(--text-color);
+      background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
+      background-size: 400% 400%; animation: gradientBG 20s ease infinite;
+      display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    .container {
+      width: 100%; max-width: 480px;
+      background: var(--surface-color); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color); padding: 2.5rem; text-align: center;
+    }
+    
+    h1 {
+        margin-top: 0; margin-bottom: 2rem; font-weight: 700; font-size: 2rem;
+        background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .input-container {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    .date-input-wrapper {
+        position: relative;
+        flex-grow: 1;
+    }
+    .date-input-wrapper::before {
+        content: '📅';
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        font-size: 1.2rem;
+    }
+    input#dob {
+      width: 100%;
+      padding: 0.85rem 0.85rem 0.85rem 45px;
+      font-size: 1rem;
+      font-family: 'Inter', sans-serif;
+      border: 1px solid var(--border-color);
+      background-color: rgba(0,0,0,0.2);
+      color: var(--text-color);
+      border-radius: 8px;
+    }
+    input#dob::-webkit-calendar-picker-indicator {
+      background: transparent;
+      bottom: 0; color: transparent;
+      cursor: pointer; height: auto; left: 0;
+      position: absolute; right: 0; top: 0; width: auto;
+    }
+    /* Style for the text placeholder */
+    input[type="text"]#dob::placeholder {
+        color: var(--text-muted-color);
+    }
+
+
+    .button {
+      background: var(--primary-gradient); color: #111; border: none; padding: 0.85rem 1.5rem;
+      border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .button:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); }
+
+    .result-container {
+      margin-top: 2rem; text-align: left;
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease, max-height 0.5s ease;
+      max-height: 0; overflow: hidden;
+    }
+    .result-container.visible {
+      opacity: 1; transform: translateY(0);
+      max-height: 500px;
+    }
+
+    .age-display { display: flex; justify-content: space-around; gap: 1rem; margin-bottom: 2rem; }
+    .age-box { background-color: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; text-align: center; flex-grow: 1; }
+    .age-box span { display: block; font-family: 'Roboto Mono', monospace; font-size: 2.5rem; font-weight: 500; color: #FDBB2D; }
+    .age-box p { margin: 0; font-size: 0.9rem; color: var(--text-muted-color); }
+    
+    .details-title { font-weight: 600; color: var(--text-muted-color); margin-bottom: 1rem; text-align: center; }
+    .detailed-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+    .stat-item { background-color: rgba(0,0,0,0.15); padding: 0.75rem; border-radius: 8px; }
+    .stat-item p { margin: 0; color: var(--text-muted-color); font-size: 0.9rem; }
+    .stat-item span { color: var(--text-color); font-weight: 500; font-family: 'Roboto Mono', monospace; font-size: 1.1rem; }
+    
+    .next-birthday { background: var(--primary-gradient); color: #111; padding: 1rem; border-radius: 8px; text-align: center; }
+    .next-birthday p { margin: 0; font-weight: 500; }
+    .next-birthday span { font-size: 1.5rem; font-weight: 700; font-family: 'Roboto Mono', monospace; }
+
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Age Calculator</h1>
+    <div class="input-container">
+        <div class="date-input-wrapper">
+            <input type="text" id="dob" placeholder="Select your Date of Birth" />
+        </div>
+        <button id="calculateBtn" class="button">Calculate</button>
+    </div>
+    <div id="result-container" class="result-container">
+        <div class="age-display">
+            <div class="age-box"> <span id="years">--</span> <p>Years</p> </div>
+            <div class="age-box"> <span id="months">--</span> <p>Months</p> </div>
+            <div class="age-box"> <span id="days">--</span> <p>Days</p> </div>
+        </div>
+        <p class="details-title">Detailed Breakdown</p>
+        <div class="detailed-stats">
+            <div class="stat-item"><p>Total Months</p><span id="totalMonths">--</span></div>
+            <div class="stat-item"><p>Total Weeks</p><span id="totalWeeks">--</span></div>
+            <div class="stat-item"><p>Total Days</p><span id="totalDays">--</span></div>
+            <div class="stat-item"><p>Total Hours</p><span id="totalHours">--</span></div>
+        </div>
+        <div class="next-birthday">
+            <p>Next Birthday in</p>
+            <span id="nextBirthday">--</span>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    const dobInput = document.getElementById("dob");
+    const calculateBtn = document.getElementById("calculateBtn");
+    const resultContainer = document.getElementById("result-container");
+    
+    const yearsEl = document.getElementById("years");
+    const monthsEl = document.getElementById("months");
+    const daysEl = document.getElementById("days");
+    const totalMonthsEl = document.getElementById("totalMonths");
+    const totalWeeksEl = document.getElementById("totalWeeks");
+    const totalDaysEl = document.getElementById("totalDays");
+    const totalHoursEl = document.getElementById("totalHours");
+    const nextBirthdayEl = document.getElementById("nextBirthday");
+
+    // === NEW SCRIPT FOR PLACEHOLDER ===
+    // Change input type to 'date' on focus
+    dobInput.addEventListener('focus', () => {
+        dobInput.type = 'date';
+    });
+
+    // Change back to 'text' if it's empty on blur
+    dobInput.addEventListener('blur', () => {
+        if (!dobInput.value) {
+            dobInput.type = 'text';
+        }
+    });
+
+
+    calculateBtn.addEventListener("click", calculateAge);
+    dobInput.addEventListener("change", calculateAge);
+
+    function animateValue(element, start, end, duration) {
+        element.innerText = start.toLocaleString(); 
+        if (start === end) return;
+        
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            const currentValue = Math.floor(progress * (end - start) + start);
+            element.innerText = currentValue.toLocaleString();
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    function calculateAge() {
+      // Ensure the input type is date to read the value correctly
+      dobInput.type = 'date';
+      const dobValue = dobInput.value;
+      if (!dobValue) {
+        return;
+      }
+
+      const birthDate = new Date(dobValue);
+      const today = new Date();
+
+      birthDate.setUTCHours(0, 0, 0, 0);
+      today.setUTCHours(0, 0, 0, 0);
+
+      if (birthDate > today) {
+        alert("Date of birth cannot be in the future. Please select a valid date.");
+        resultContainer.classList.remove("visible");
+        return;
+      }
+      
+      let ageYears = today.getFullYear() - birthDate.getFullYear();
+      let ageMonths = today.getMonth() - birthDate.getMonth();
+      let ageDays = today.getDate() - birthDate.getDate();
+
+      if (ageDays < 0) {
+        ageMonths--;
+        ageDays += new Date(today.getFullYear(), today.getMonth(), 0).getDate();
+      }
+      if (ageMonths < 0) {
+        ageYears--;
+        ageMonths += 12;
+      }
+
+      const totalDaysCalc = Math.floor((today - birthDate) / (1000 * 60 * 60 * 24));
+      const totalMonthsCalc = ageYears * 12 + ageMonths;
+      const totalWeeksCalc = Math.floor(totalDaysCalc / 7);
+      const totalHoursCalc = totalDaysCalc * 24;
+      
+      let nextBirthdayDate = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
+      if (today > nextBirthdayDate) {
+        nextBirthdayDate.setFullYear(today.getFullYear() + 1);
+      }
+      const daysToNextBirthday = Math.ceil((nextBirthdayDate - today) / (1000 * 60 * 60 * 24));
+
+      resultContainer.classList.add("visible");
+      const animationDuration = 1200;
+      animateValue(yearsEl, 0, ageYears, animationDuration);
+      animateValue(monthsEl, 0, ageMonths, animationDuration);
+      animateValue(daysEl, 0, ageDays, animationDuration);
+      
+      animateValue(totalMonthsEl, 0, totalMonthsCalc, animationDuration);
+      animateValue(totalWeeksEl, 0, totalWeeksCalc, animationDuration);
+      animateValue(totalDaysEl, 0, totalDaysCalc, animationDuration);
+      animateValue(totalHoursEl, 0, totalHoursCalc, animationDuration);
+      
+      if (daysToNextBirthday === 0 || daysToNextBirthday > 365) {
+          nextBirthdayEl.innerText = 'Happy Birthday!';
+      } else {
+          nextBirthdayEl.innerText = `${daysToNextBirthday} Days`;
+      }
+    }
+  </script>
+
+</body>
+</html>
