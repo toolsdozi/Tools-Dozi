@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>eSign Solution (Final Version)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+    :root {
+      --primary-gradient: linear-gradient(90deg, #FDBB2D 0%, #D4AF37 50%, #B8860B 100%);
+      --background-start: #0F0C29; --background-mid: #302B63; --background-end: #24243E;
+      --surface-color: rgba(26, 26, 42, 0.85); --text-color: #E0E0E0; --text-muted-color: #A0A0A0;
+      --border-color: rgba(255, 215, 0, 0.2); --success-color: #00C851;
+      --border-radius: 16px; --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: 'Inter', sans-serif; color: var(--text-color);
+      background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
+      background-size: 400% 400%; animation: gradientBG 20s ease infinite;
+      display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    .hidden { display: none !important; }
+    .state-container { animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .main-container {
+      width: 100%; max-width: 900px;
+      background: var(--surface-color); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color); padding: 2.5rem; text-align: center;
+    }
+    
+    h1 {
+        margin-top: 0; margin-bottom: 2rem; font-weight: 700; font-size: 2rem;
+        background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .upload-area {
+      border: 2px dashed var(--border-color); border-radius: var(--border-radius);
+      padding: 4rem 2rem; cursor: pointer; transition: all 0.3s ease;
+    }
+    .upload-area.drag-over { border-color: #FDBB2D; box-shadow: 0 0 15px rgba(253, 187, 45, 0.3); }
+    .upload-area strong { color: #FDBB2D; }
+
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+    .pagination { display: flex; align-items: center; gap: 1rem; }
+    #pdf-viewer {
+        border: 1px solid var(--border-color); border-radius: 8px;
+        margin-bottom: 1rem; position: relative; overflow: hidden; background-color: #fff;
+    }
+    #pdf-viewer canvas { max-width: 100%; height: auto; display: block; }
+    
+    #draggable-signature {
+        position: absolute; cursor: move; display: flex; justify-content: center; align-items: center;
+        border: 2px dashed rgba(253, 187, 45, 0.7);
+        user-select: none; -webkit-user-select: none;
+    }
+    #draggable-signature img {
+        width: 100%; height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+    }
+    .resize-handle {
+        position: absolute; width: 12px; height: 12px;
+        background-color: #FDBB2D; border: 2px solid #fff; border-radius: 50%;
+    }
+    .resize-handle.br { bottom: -6px; right: -6px; cursor: se-resize; }
+
+    #signature-modal {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+        display: flex; justify-content: center; align-items: center; z-index: 1000;
+    }
+    .modal-content {
+        background: var(--surface-color); padding: 1.5rem 2rem 2rem; border-radius: var(--border-radius);
+        border: 1px solid var(--border-color); min-width: 450px;
+    }
+    .modal-tabs { display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
+    .modal-tab-btn {
+        background: none; border: none; color: var(--text-muted-color);
+        padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 600; cursor: pointer;
+        border-bottom: 3px solid transparent; transition: all 0.3s ease;
+    }
+    .modal-tab-btn.active { color: #FDBB2D; border-bottom-color: #FDBB2D; }
+    #signaturePadCanvas { background-color: #fff; border-radius: 8px; touch-action: none; }
+    #upload-signature-area {
+        background-color: rgba(0,0,0,0.2); border: 2px dashed var(--border-color); border-radius: 8px;
+        padding: 2rem; text-align: center; cursor: pointer;
+    }
+    #upload-preview { max-width: 100%; max-height: 150px; margin-top: 1rem; border-radius: 8px; }
+    
+    .button {
+      background: var(--primary-gradient); color: #111; border: none; padding: 0.8rem 1.5rem;
+      border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
+      transition: all 0.3s ease; background-size: 200% auto;
+    }
+    .button:hover:not(:disabled) { background-position: right center; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); }
+    .button:disabled { background: #444; color: #888; cursor: not-allowed; }
+    .button.secondary { background: none; border: 2px solid var(--text-muted-color); color: var(--text-muted-color); }
+    .button.secondary:hover { background-color: var(--text-muted-color); color: #111; box-shadow: none; }
+    .modal-footer { margin-top: 1.5rem; display: flex; justify-content: space-between; }
+    
+    #processing-container h3, #results-container h3 { font-size: 1.8rem; text-align: center; }
+    #results-container h3 { color: var(--success-color); }
+    .loader {
+        width: 50px; height: 50px; border-radius: 50%; display: block;
+        border-top: 3px solid #FDBB2D; border-right: 3px solid transparent;
+        animation: spin 1s linear infinite; margin: 0 auto 1.5rem auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <h1>eSign Solution</h1>
+        
+        <div id="upload-container" class="state-container">
+            <label for="pdfInput" class="upload-area">
+                <p>Drag & Drop Your PDF Here</p>
+                <p>or <strong>Browse File</strong></p>
+            </label>
+            <input type="file" id="pdfInput" accept="application/pdf" class="hidden" />
+        </div>
+        
+        <div id="signing-container" class="state-container hidden">
+            <div class="controls">
+                <div class="pagination">
+                    <button id="prev-page" class="button secondary">&lt;</button>
+                    <span>Page <span id="page-num"></span> of <span id="page-count"></span></span>
+                    <button id="next-page" class="button secondary">&gt;</button>
+                </div>
+                <div>
+                    <button id="add-signature-btn" class="button">Add Signature</button>
+                    <button id="apply-btn" class="button" disabled>Apply & Download</button>
+                </div>
+            </div>
+            <div id="pdf-viewer">
+                <canvas id="pdf-canvas"></canvas>
+                <div id="draggable-signature" class="hidden">
+                    <img id="signature-img" src="" alt="Your Signature" />
+                    <div class="resize-handle br"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="processing-container" class="state-container hidden">
+            <div class="loader"></div>
+            <h3>Applying Signature...</h3>
+        </div>
+
+        <div id="results-container" class="state-container hidden">
+            <h3>Signed PDF Ready!</h3>
+            <a id="downloadLink" class="button">Download File</a>
+            <button id="resetBtn" class="button secondary" style="margin-left: 1rem;">Sign Another Document</button>
+        </div>
+    </div>
+
+    <div id="signature-modal" class="hidden">
+        <div class="modal-content">
+            <div class="modal-tabs">
+                <button class="modal-tab-btn active" data-tab="draw">Draw</button>
+                <button class="modal-tab-btn" data-tab="upload">Upload</button>
+            </div>
+            <div id="draw-tab" class="modal-tab-content">
+                <canvas id="signaturePadCanvas" width="400" height="200"></canvas>
+            </div>
+            <div id="upload-tab" class="modal-tab-content hidden">
+                <label for="imageUploadInput" id="upload-signature-area">
+                    <p>Click to upload signature image</p>
+                    <p>(PNG, JPG)</p>
+                </label>
+                <input type="file" id="imageUploadInput" accept="image/png, image/jpeg" class="hidden"/>
+                <img id="upload-preview" class="hidden" />
+            </div>
+            <div class="modal-footer">
+                <button id="clear-signature-btn" class="button secondary">Clear</button>
+                <button id="save-signature-btn" class="button">Save Signature</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+
+    <script type="module">
+        const { PDFDocument } = PDFLib;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js`;
+
+        const uploadContainer = document.getElementById('upload-container');
+        const signingContainer = document.getElementById('signing-container');
+        const processingContainer = document.getElementById('processing-container');
+        const resultsContainer = document.getElementById('results-container');
+        const pdfInput = document.getElementById('pdfInput');
+        const pdfCanvas = document.getElementById('pdf-canvas');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const pageNumEl = document.getElementById('page-num');
+        const pageCountEl = document.getElementById('page-count');
+        const addSignatureBtn = document.getElementById('add-signature-btn');
+        const applyBtn = document.getElementById('apply-btn');
+        const signatureModal = document.getElementById('signature-modal');
+        const signaturePadCanvas = document.getElementById('signaturePadCanvas');
+        const clearSignatureBtn = document.getElementById('clear-signature-btn');
+        const saveSignatureBtn = document.getElementById('save-signature-btn');
+        const modalTabs = document.querySelectorAll('.modal-tab-btn');
+        const drawTab = document.getElementById('draw-tab');
+        const uploadTab = document.getElementById('upload-tab');
+        const imageUploadInput = document.getElementById('imageUploadInput');
+        const uploadPreview = document.getElementById('upload-preview');
+        const draggableSignature = document.getElementById('draggable-signature');
+        const signatureImg = document.getElementById('signature-img');
+        const downloadLink = document.getElementById('downloadLink');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
+        let pdfDocBytes = null, signatureDataUrl = null;
+        let uploadedSignatureUrl = null;
+        const signaturePad = new SignaturePad(signaturePadCanvas, {backgroundColor: 'rgb(255, 255, 255)'});
+
+        function showState(state) {
+            [uploadContainer, signingContainer, processingContainer, resultsContainer].forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${state}-container`).classList.remove('hidden');
+        }
+
+        pdfInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+        uploadContainer.addEventListener('dragover', (e) => { e.preventDefault(); uploadContainer.classList.add('drag-over'); });
+        uploadContainer.addEventListener('dragleave', () => uploadContainer.classList.remove('drag-over'));
+        uploadContainer.addEventListener('drop', (e) => { e.preventDefault(); uploadContainer.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+
+        async function handleFile(file) {
+            if (!file || file.type !== 'application/pdf') return;
+            pdfDocBytes = await file.arrayBuffer();
+            const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(pdfDocBytes) });
+            try {
+                pdfDoc = await loadingTask.promise;
+                pageCountEl.textContent = pdfDoc.numPages;
+                pageNum = 1;
+                await renderPage(pageNum);
+                showState('signing');
+            } catch (error) {
+                console.error("Failed to load PDF:", error);
+                alert("Could not load the PDF. It may be corrupt or protected.");
+            }
+        }
+        async function renderPage(num) {
+            pageRendering = true;
+            try {
+                const page = await pdfDoc.getPage(num);
+                const viewport = page.getViewport({ scale: 1.5 });
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+                const renderContext = { canvasContext: pdfCanvas.getContext('2d'), viewport: viewport };
+                await page.render(renderContext).promise;
+            } catch(e) { console.error("PDF rendering error: ", e); }
+            finally {
+                pageRendering = false;
+                pageNumEl.textContent = num;
+                if (pageNumPending !== null) { renderPage(pageNumPending); pageNumPending = null; }
+            }
+        }
+        function queueRenderPage(num) { if (pageRendering) { pageNumPending = num; } else { renderPage(num); } }
+        prevPageBtn.addEventListener('click', () => { if (pageNum > 1) queueRenderPage(--pageNum); });
+        nextPageBtn.addEventListener('click', () => { if (pageNum < pdfDoc.numPages) queueRenderPage(++pageNum); });
+
+        addSignatureBtn.addEventListener('click', () => signatureModal.classList.remove('hidden'));
+        modalTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                modalTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                drawTab.classList.toggle('hidden', tab.dataset.tab !== 'draw');
+                uploadTab.classList.toggle('hidden', tab.dataset.tab !== 'upload');
+                clearSignatureBtn.textContent = tab.dataset.tab === 'draw' ? 'Clear' : 'Remove';
+            });
+        });
+
+        clearSignatureBtn.addEventListener('click', () => {
+            if(!drawTab.classList.contains('hidden')) signaturePad.clear();
+            else { uploadedSignatureUrl = null; imageUploadInput.value = ''; uploadPreview.classList.add('hidden'); }
+        });
+        
+        imageUploadInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (event) => { uploadedSignatureUrl = event.target.result; uploadPreview.src = uploadedSignatureUrl; uploadPreview.classList.remove('hidden'); };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        saveSignatureBtn.addEventListener('click', () => {
+            const isDrawActive = document.querySelector('.modal-tab-btn[data-tab="draw"]').classList.contains('active');
+            if(isDrawActive) { if (signaturePad.isEmpty()) { alert("Please draw signature."); return; } signatureDataUrl = signaturePad.toDataURL("image/png"); }
+            else { if (!uploadedSignatureUrl) { alert("Please upload signature image."); return; } signatureDataUrl = uploadedSignatureUrl; }
+            signatureImg.src = signatureDataUrl;
+            draggableSignature.classList.remove('hidden');
+            draggableSignature.style.left = '50px'; draggableSignature.style.top = '50px';
+            draggableSignature.style.width = '150px'; draggableSignature.style.height = '75px';
+            applyBtn.disabled = false;
+            signatureModal.classList.add('hidden');
+        });
+
+        let isDragging = false, isResizing = false;
+        let startX, startY, startLeft, startTop, startWidth, startHeight;
+
+        const onDragStart = (e) => {
+            e.preventDefault();
+            const clientX = e.clientX ?? e.touches[0].clientX;
+            const clientY = e.clientY ?? e.touches[0].clientY;
+            
+            if (e.target.classList.contains('resize-handle')) { 
+                isResizing = true; 
+                startWidth = parseInt(document.defaultView.getComputedStyle(draggableSignature).width, 10); 
+                startHeight = parseInt(document.defaultView.getComputedStyle(draggableSignature).height, 10); 
+            } else { 
+                isDragging = true; 
+                startLeft = draggableSignature.offsetLeft; 
+                startTop = draggableSignature.offsetTop; 
+            }
+            startX = clientX; startY = clientY;
+            document.addEventListener('mousemove', onDragMove);
+            document.addEventListener('touchmove', onDragMove, { passive: false });
+            document.addEventListener('mouseup', onDragEnd);
+            document.addEventListener('touchend', onDragEnd);
+        };
+        const onDragMove = (e) => {
+            if (e.cancelable) e.preventDefault();
+            const clientX = e.clientX ?? e.touches[0].clientX;
+            const clientY = e.clientY ?? e.touches[0].clientY;
+            if (isDragging) { 
+                draggableSignature.style.left = startLeft + clientX - startX + 'px'; 
+                draggableSignature.style.top = startTop + clientY - startY + 'px'; 
+            } else if (isResizing) { 
+                const newWidth = startWidth + clientX - startX; 
+                const newHeight = startHeight + clientY - startY; 
+                draggableSignature.style.width = newWidth > 30 ? newWidth + 'px' : '30px'; 
+                draggableSignature.style.height = newHeight > 15 ? newHeight + 'px' : '15px';
+            }
+        };
+        const onDragEnd = () => { 
+            isDragging = isResizing = false; 
+            document.removeEventListener('mousemove', onDragMove);
+            document.removeEventListener('touchmove', onDragMove);
+            document.removeEventListener('mouseup', onDragEnd);
+            document.removeEventListener('touchend', onDragEnd);
+        };
+        draggableSignature.addEventListener('mousedown', onDragStart);
+        draggableSignature.addEventListener('touchstart', onDragStart);
+        
+        const getCleanPngBytes = (dataUrl) => {
+            return new Promise((resolve, reject) => {
+                const image = new Image();
+                image.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = image.naturalWidth;
+                    canvas.height = image.naturalHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(image, 0, 0);
+                    canvas.toBlob(async (blob) => {
+                        if (!blob) {
+                            return reject(new Error("Canvas to Blob conversion failed."));
+                        }
+                        try {
+                            const arrayBuffer = await blob.arrayBuffer();
+                            resolve(arrayBuffer);
+                        } catch (e) {
+                            reject(e);
+                        }
+                    }, 'image/png', 1.0); // Use quality 1.0 for PNG
+                };
+                image.onerror = () => reject(new Error('Could not load the provided image. It might be corrupt.'));
+                image.src = dataUrl;
+            });
+        };
+
+        applyBtn.addEventListener('click', async () => {
+            showState('processing');
+            try {
+                const finalPdfDoc = await PDFDocument.load(pdfDocBytes, { ignoreEncryption: true });
+                
+                const cleanPngBytes = await getCleanPngBytes(signatureDataUrl);
+                const signatureImage = await finalPdfDoc.embedPng(cleanPngBytes);
+
+                const page = finalPdfDoc.getPages()[pageNum - 1];
+                const canvasRect = pdfCanvas.getBoundingClientRect();
+                const sigRect = draggableSignature.getBoundingClientRect();
+                
+                const x = (sigRect.left - canvasRect.left) / canvasRect.width * page.getWidth();
+                const y = (canvasRect.bottom - sigRect.bottom) / canvasRect.height * page.getHeight();
+                const width = sigRect.width / canvasRect.width * page.getWidth();
+                const height = sigRect.height / canvasRect.height * page.getHeight();
+                
+                page.drawImage(signatureImage, { x, y, width, height });
+                
+                const signedPdfBytes = await finalPdfDoc.save();
+                const blob = new Blob([signedPdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                downloadLink.href = url; downloadLink.download = "signed_document.pdf";
+                showState('results');
+            } catch (err) {
+                console.error("Error applying signature:", err);
+                alert("Sorry, a critical error occurred. The PDF or image format might be incompatible. Please refresh and try again with a standard PNG or JPG file.");
+                showState('signing');
+            }
+        });
+        
+        resetBtn.addEventListener('click', () => {
+            pdfDoc = null; pdfDocBytes = null; signatureDataUrl = null; uploadedSignatureUrl = null;
+            pdfInput.value = ''; imageUploadInput.value = ''; signaturePad.clear();
+            applyBtn.disabled = true; draggableSignature.classList.add('hidden');
+            if(downloadLink.href) URL.revokeObjectURL(downloadLink.href);
+            showState('upload');
+        });
+    </script>
+</body>
+</html>
