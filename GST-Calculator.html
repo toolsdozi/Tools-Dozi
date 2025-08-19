@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Royal Gold GST Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1A1A1A;
+            --surface-color: #242424;
+            --border-color: #3D3D3D;
+            --primary-text-color: #E0E0E0;
+            --secondary-text-color: #9E9E9E;
+            --gold-color: #FFD700;
+            --gold-darker-color: #B8860B;
+            --gold-glow-color: rgba(255, 215, 0, 0.25);
+            --border-radius: 8px;
+            --transition-speed: 0.3s;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: var(--bg-color);
+            background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 30px 30px;
+            color: var(--primary-text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+        }
+
+        .console-wrapper {
+            width: 100%;
+            max-width: 480px;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .console-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: var(--border-radius);
+            border: 2px solid transparent;
+            background: linear-gradient(45deg, var(--gold-darker-color), var(--gold-color), var(--gold-darker-color)) border-box;
+            -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out;
+            mask-composite: exclude;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .console-header {
+            display: flex; justify-content: space-between; align-items: center;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+        .console-header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--primary-text-color);
+            width: 100%;
+        }
+        .settings-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none; border: none; cursor: pointer; color: var(--secondary-text-color);
+            transition: color var(--transition-speed);
+        }
+        .settings-btn:hover { color: var(--gold-color); }
+        
+        .input-group { margin-bottom: 1.5rem; }
+        .input-group label { display: block; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--secondary-text-color); }
+        .input-field {
+            width: 100%; padding: 12px 16px; border: 1px solid var(--border-color);
+            border-radius: 6px; background: #1C1C1C; color: var(--primary-text-color);
+            font-size: 1.5rem; font-family: 'Roboto Mono', monospace; outline: none; transition: all var(--transition-speed);
+        }
+        .input-field:focus {
+            border-color: var(--gold-color);
+            box-shadow: 0 0 10px var(--gold-glow-color);
+        }
+        
+        .results-console { min-height: 200px; }
+        .results-console .empty-state { text-align: center; padding-top: 4rem; color: var(--secondary-text-color); }
+        .result-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; font-size: 1rem; }
+        .result-item .label { color: var(--secondary-text-color); }
+        .result-item .value { font-family: 'Roboto Mono', monospace; font-weight: 500; font-size: 1.1rem; }
+        .total-item { padding-top: 1.25rem; margin-top: 1rem; border-top: 1px solid var(--border-color); }
+        .total-item .value { font-size: 2.25rem; color: var(--gold-color); text-shadow: 0 0 12px var(--gold-glow-color); }
+        
+        .visual-breakdown { margin-top: 1.5rem; }
+        .breakdown-bar { display: flex; width: 100%; height: 6px; border-radius: 3px; overflow: hidden; background: var(--border-color); }
+        .base-bar { background: var(--secondary-text-color); transition: width var(--transition-speed) ease; }
+        .gst-bar { background: linear-gradient(90deg, var(--gold-darker-color), var(--gold-color)); box-shadow: 0 0 10px var(--gold-glow-color); transition: width var(--transition-speed) ease; }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all var(--transition-speed) ease; z-index: 1000; }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: var(--surface-color); padding: 2rem; border-radius: var(--border-radius);
+            border: 1px solid var(--border-color); width: 90%; max-width: 400px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-family: 'Playfair Display', serif; }
+        .close-btn { background: none; border: none; color: var(--secondary-text-color); font-size: 1.75rem; cursor: pointer; line-height: 1; }
+        #gstType { font-size: 1rem; padding: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="console-wrapper">
+        <div class="console-header">
+            <h1>GST Console</h1>
+            <button class="settings-btn" id="settingsBtn" title="Settings">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+        </div>
+
+        <div class="input-group">
+            <label for="amount">Base Amount (₹)</label>
+            <input type="text" id="amount" class="input-field" placeholder="0.00" inputmode="decimal" />
+        </div>
+        <div class="input-group">
+            <label for="gstRate">GST Rate (%)</label>
+            <input type="text" id="gstRate" class="input-field" placeholder="0.0" inputmode="decimal"/>
+        </div>
+
+        <div class="results-console" id="resultsConsole">
+            <div class="empty-state">
+                <p>Console is ready.</p>
+                <p>Enter an amount to begin.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="close-btn" id="closeSettingsBtn">&times;</button>
+            </div>
+            <div class="input-group">
+                <label for="defaultRate">Default GST Rate (%)</label>
+                <input type="number" id="defaultRate" class="input-field" />
+            </div>
+            <div class="input-group">
+                <label for="gstType">GST Breakdown Type</label>
+                <select id="gstType" class="input-field">
+                    <option value="cgst_sgst">CGST + SGST</option>
+                    <option value="igst">IGST</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const amountInput = document.getElementById('amount');
+        const gstRateInput = document.getElementById('gstRate');
+        const resultsConsole = document.getElementById('resultsConsole');
+        
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const defaultRateInput = document.getElementById('defaultRate');
+        const gstTypeSelect = document.getElementById('gstType');
+
+        let settings = {
+            defaultRate: 18,
+            gstType: 'cgst_sgst'
+        };
+
+        const currencyFormatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+        
+        function formatNumber(input) {
+            if (!input.value) return;
+            let value = input.value;
+            let cursorPosition = input.selectionStart;
+
+            // Only allow numbers and one decimal point
+            let sanitizedValue = value.replace(/[^0-9.]/g, '');
+            const parts = sanitizedValue.split('.');
+            if (parts.length > 2) {
+                sanitizedValue = parts[0] + '.' + parts.slice(1).join('');
+            }
+            
+            if (value !== sanitizedValue) {
+                let diff = value.length - sanitizedValue.length;
+                input.value = sanitizedValue;
+                cursorPosition -= diff;
+                input.setSelectionRange(cursorPosition, cursorPosition);
+            }
+            calculate();
+        }
+
+        function calculate() {
+            const amount = parseFloat(amountInput.value.replace(/,/g, '')) || 0;
+            const gstRate = parseFloat(gstRateInput.value) || 0;
+
+            if (amount === 0 || gstRate === 0) {
+                resultsConsole.innerHTML = `<div class="empty-state"><p>Enter an amount and GST rate.</p></div>`;
+                return;
+            }
+            
+            const baseAmount = amount;
+            const gstAmount = baseAmount * (gstRate / 100);
+            const totalAmount = baseAmount + gstAmount;
+
+            const breakdown = {};
+            if (settings.gstType === 'igst') {
+                breakdown.igst = gstAmount;
+            } else {
+                breakdown.cgst = gstAmount / 2;
+                breakdown.sgst = gstAmount / 2;
+            }
+
+            renderResults({ baseAmount, totalAmount, ...breakdown, gstRate});
+        }
+        
+        function renderResults(data) {
+            const basePercent = (data.baseAmount / data.totalAmount) * 100;
+            const gstPercent = 100 - basePercent;
+
+            let breakdownHTML = '';
+            if (settings.gstType === 'igst') {
+                breakdownHTML = `
+                <div class="result-item">
+                    <span class="label">IGST (${data.gstRate}%)</span>
+                    <span class="value">${currencyFormatter.format(data.igst)}</span>
+                </div>`;
+            } else {
+                breakdownHTML = `
+                <div class="result-item">
+                    <span class="label">CGST (${data.gstRate/2}%)</span>
+                    <span class="value">${currencyFormatter.format(data.cgst)}</span>
+                </div>
+                <div class="result-item">
+                    <span class="label">SGST (${data.gstRate/2}%)</span>
+                    <span class="value">${currencyFormatter.format(data.sgst)}</span>
+                </div>`;
+            }
+
+            resultsConsole.innerHTML = `
+                <div class="result-item">
+                    <span class="label">Base Amount</span>
+                    <span class="value">${currencyFormatter.format(data.baseAmount)}</span>
+                </div>
+                ${breakdownHTML}
+                <div class="result-item total-item">
+                    <span class="label">Total Amount</span>
+                    <span class="value">${currencyFormatter.format(data.totalAmount)}</span>
+                </div>
+                <div class="visual-breakdown">
+                    <div class="breakdown-bar">
+                        <div class="base-bar" style="width: ${basePercent}%" title="Base Amount"></div>
+                        <div class="gst-bar" style="width: ${gstPercent}%" title="GST Amount"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadSettings() {
+            try {
+                const savedSettings = localStorage.getItem('gstConsoleSettings');
+                if (savedSettings) {
+                    settings = JSON.parse(savedSettings);
+                }
+            } catch (e) {
+                console.error("Could not load settings from localStorage", e);
+            }
+            gstRateInput.value = settings.defaultRate;
+            defaultRateInput.value = settings.defaultRate;
+            gstTypeSelect.value = settings.gstType;
+        }
+
+        function saveSettings() {
+            settings.defaultRate = parseFloat(defaultRateInput.value) || 18;
+            settings.gstType = gstTypeSelect.value;
+            localStorage.setItem('gstConsoleSettings', JSON.stringify(settings));
+            gstRateInput.value = settings.defaultRate;
+            calculate();
+            settingsModal.classList.remove('visible');
+        }
+        
+        [amountInput, gstRateInput].forEach(input => {
+            input.addEventListener('input', () => formatNumber(input));
+        });
+
+        settingsBtn.addEventListener('click', () => settingsModal.classList.add('visible'));
+        closeSettingsBtn.addEventListener('click', saveSettings);
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) saveSettings();
+        });
+
+        loadSettings();
+        calculate();
+
+    });
+    </script>
+</body>
+</html>
