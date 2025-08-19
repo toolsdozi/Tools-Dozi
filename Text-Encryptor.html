@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cosmic Gold - Premium Sync Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Universal Variables */
+            --border-radius: 12px;
+            --transition-speed: 0.3s;
+            --font-main: 'Lato', sans-serif;
+            --font-title: 'Playfair Display', serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+
+        /* Dark Theme (Default) */
+        :root[data-theme='dark'] {
+            --bg-start: #0F0C29; --bg-mid: #302B63; --bg-end: #24243E;
+            --surface-color: rgba(30, 30, 42, 0.75);
+            --border-color: rgba(255, 215, 0, 0.2);
+            --primary-text-color: #F0F0F0;
+            --secondary-text-color: #A0A0A0;
+            --gold-start: #FDBB2D; --gold-end: #D4AF37; --purple-accent: #8A2BE2;
+            --gold-gradient: linear-gradient(45deg, var(--gold-start), var(--gold-end));
+            --border-gradient: linear-gradient(90deg, var(--gold-start), var(--purple-accent), var(--gold-start));
+            --gold-glow-color: rgba(253, 187, 45, 0.3);
+            --shadow-color: rgba(0,0,0,0.5);
+            --input-bg-color: rgba(0,0,0,0.3);
+        }
+
+        /* Light Theme */
+        :root[data-theme='light'] {
+            --bg-start: #FDFBFB; --bg-mid: #EBEDEE; --bg-end: #FDFBFB;
+            --surface-color: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(0, 0, 0, 0.1);
+            --primary-text-color: #111;
+            --secondary-text-color: #666;
+            --gold-start: #BF953F; --gold-end: #FCF6BA; --purple-accent: #8A2BE2;
+            --gold-gradient: linear-gradient(45deg, #1d2b64, #3d52a0);
+            --border-gradient: linear-gradient(90deg, #1d2b64, var(--purple-accent), #1d2b64);
+            --gold-glow-color: rgba(61, 82, 160, 0.3);
+            --shadow-color: rgba(0,0,0,0.1);
+            --input-bg-color: rgba(0,0,0,0.03);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-main);
+            background: linear-gradient(-45deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--primary-text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            transition: color var(--transition-speed), background var(--transition-speed);
+        }
+
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background: var(--surface-color); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--border-color); border-radius: var(--border-radius); padding: 2rem 2.5rem;
+            box-shadow: 0 20px 60px var(--shadow-color); position: relative;
+            transition: all var(--transition-speed);
+        }
+        .container::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: var(--border-radius); padding: 2px; background: var(--border-gradient);
+            background-size: 200% 100%; -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: destination-out; mask-composite: exclude;
+            animation: gradientBorder 3s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes gradientBorder { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; gap: 1rem; }
+        h1 { font-family: var(--font-title); font-size: 2rem; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-controls { display: flex; gap: 0.75rem; align-items: center; flex-shrink: 0; }
+
+        .icon-btn { background: transparent; color: var(--secondary-text-color); border: none; padding: 0.5rem; border-radius: 50%; cursor: pointer; transition: all var(--transition-speed); display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover { color: var(--primary-text-color); background: rgba(128,128,128,0.2); transform: scale(1.1); }
+        .icon-btn svg { width: 18px; height: 18px; }
+
+        .share-btn { background: var(--gold-gradient); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all var(--transition-speed); display: flex; align-items: center; gap: 0.5rem; }
+        .share-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--gold-glow-color); }
+        .share-btn svg { fill: white; }
+
+        .panels { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+        
+        .panel { display: flex; flex-direction: column; gap: 0.5rem; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; }
+        .panel-header .label { font-size: 0.9rem; font-weight: bold; color: var(--secondary-text-color); }
+        .panel-header .actions { display: flex; gap: 0.5rem; }
+
+        .text-area { width: 100%; min-height: 280px; padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg-color); color: var(--primary-text-color); font-size: 1rem; font-family: var(--font-mono); outline: none; transition: all var(--transition-speed); resize: vertical; }
+        .text-area:focus { border-color: var(--gold-start); box-shadow: 0 0 15px var(--gold-glow-color); }
+        #output-area { cursor: default; }
+
+        .controls-and-stats { display: flex; flex-direction: column; gap: 1.5rem; }
+        
+        .options { display: flex; flex-wrap: wrap; gap: 1rem; }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
+        .checkbox-group input { display: none; }
+        .checkbox-group .checkmark { width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; background: rgba(0,0,0,0.1); transition: all var(--transition-speed); position: relative; }
+        .checkbox-group .checkmark::after { content: '✔'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); color: white; transition: transform var(--transition-speed) ease-out; }
+        .checkbox-group input:checked + .checkmark { background: var(--gold-gradient); border-color: transparent; }
+        .checkbox-group input:checked + .checkmark::after { transform: translate(-50%, -50%) scale(1); }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; font-family: var(--font-mono); background: var(--input-bg-color); padding: 0.5rem 1rem; border-radius: 8px; }
+        .stat-item { text-align: center; }
+        .stat-item p { font-size: 1.25rem; font-weight: 600; transition: color 0.3s; }
+        .stat-item span { color: var(--secondary-text-color); font-size: 0.75rem; text-transform: uppercase; }
+        
+        .toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: var(--gold-gradient); color: #fff; padding: 1rem 1.5rem; border-radius: 8px; z-index: 100; transition: bottom 0.5s ease-in-out, transform 0.5s ease-in-out; font-weight: 600; box-shadow: 0 5px 15px var(--gold-glow-color); }
+        
+        /* --- RESPONSIVE IMPROVEMENTS --- */
+        @media (min-width: 768px) {
+            .panels { grid-template-columns: 1fr 1fr; }
+            .controls-and-stats { flex-direction: row; justify-content: space-between; align-items: center; }
+        }
+        @media (max-width: 600px) {
+            body { padding: 0.5rem; }
+            .container { padding: 1.5rem 1rem; }
+            h1 { font-size: 1.6rem; }
+            .header { flex-direction: column; align-items: flex-start; }
+            .options { justify-content: flex-start; }
+            .text-area { min-height: 200px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Sync Console</h1>
+            <div class="header-controls">
+                <button class="icon-btn" id="theme-toggle" title="Switch Theme">
+                    <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.106a.75.75 0 010 1.06l-1.591 1.59a.75.75 0 11-1.06-1.06l1.59-1.59a.75.75 0 011.06 0zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.894 17.894a.75.75 0 01-1.06 0l-1.59-1.591a.75.75 0 111.06-1.06l1.59 1.59a.75.75 0 010 1.061zM12 18a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM5.106 17.894a.75.75 0 010-1.06l1.59-1.59a.75.75 0 011.06 1.06l-1.59 1.59a.75.75 0 01-1.06 0zM3 12a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3.75A.75.75 0 013 12zM6.106 6.106a.75.75 0 011.06 0l1.591 1.59a.75.75 0 01-1.06 1.06l-1.59-1.59a.75.75 0 010-1.06z"/></svg>
+                    <svg id="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 004.463-.949a.75.75 0 01.819.162l.805.805a.75.75 0 01-.316 1.065A11.25 11.25 0 0112 21a11.25 11.25 0 01-11.25-11.25 11.25 11.25 0 019.282-11.242l.805.805z" clip-rule="evenodd" /></svg>
+                </button>
+                <button class="share-btn" id="shareBtn" title="Share or copy link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/><path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 0 0-4.243-4.243L6.586 4.672z"/></svg>
+                    <span id="shareBtnText">Share</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="panels">
+            <div class="panel">
+                <div class="panel-header">
+                    <label for="input-area" class="label">Input</label>
+                    <div class="actions">
+                        <button class="icon-btn" id="uploadBtn" title="Upload .txt file"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614z" /><path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" /></svg></button>
+                        <button class="icon-btn" id="clearBtn" title="Clear Input"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-1.157.26-2.116.86-2.847 1.691a.75.75 0 001.06 1.06c.64-.64 1.44-1.121 2.387-1.3V12a.75.75 0 001.5 0V5.643c.947.179 1.747.66 2.387 1.3a.75.75 0 001.06-1.06A4.238 4.238 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 12.5a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z" clip-rule="evenodd" /><path d="M3 10a.75.75 0 01.75-.75h12.5a.75.75 0 010 1.5H3.75A.75.75 0 013 10z" /></svg></button>
+                    </div>
+                </div>
+                <textarea id="input-area" class="text-area" placeholder="Paste or type lines here..."></textarea>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <label for="output-area" class="label">Output</label>
+                    <div class="actions">
+                        <button class="icon-btn" id="downloadBtn" title="Download as .txt"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.25 13.25a.75.75 0 001.5 0V4.636l2.955 3.129a.75.75 0 001.09-1.03l-4.25-4.5a.75.75 0 00-1.09 0l-4.25 4.5a.75.75 0 101.09 1.03L9.25 4.636v8.614zM18 14.25a.75.75 0 00-1.5 0v1a.75.75 0 01-.75.75H4.25a.75.75 0 01-.75-.75v-1a.75.75 0 00-1.5 0v1A2.25 2.25 0 004.25 18h11.5A2.25 2.25 0 0018 15.25v-1z" /></svg></button>
+                        <button class="icon-btn" id="copyBtn" title="Copy to Clipboard"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.121A1.5 1.5 0 0117 6.621V16.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 16.5v-13z" /><path d="M5 6.5A1.5 1.5 0 016.5 5h3a.5.5 0 000-1h-3A2.5 2.5 0 004 6.5v10A2.5 2.5 0 006.5 19h7a2.5 2.5 0 002.5-2.5h-1A1.5 1.5 0 0113.5 18h-7A1.5 1.5 0 015 16.5v-10z" /></svg></button>
+                    </div>
+                </div>
+                <textarea id="output-area" class="text-area" readonly placeholder="Result will appear here..."></textarea>
+            </div>
+        </div>
+        
+        <div class="controls-and-stats">
+            <div class="options">
+                <label class="checkbox-group"><input type="checkbox" id="ignoreCaseCheck"><span class="checkmark"></span> Ignore Case</label>
+                <label class="checkbox-group"><input type="checkbox" id="sortCheck"><span class="checkmark"></span> Sort Lines</label>
+                <label class="checkbox-group"><input type="checkbox" id="removeEmptyCheck" checked><span class="checkmark"></span> Remove Empty</label>
+            </div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-item"><p id="originalCount">0</p><span>Lines</span></div>
+            <div class="stat-item"><p id="wordCount">0</p><span>Words</span></div>
+            <div class="stat-item"><p id="charCount">0</p><span>Chars</span></div>
+            <div class="stat-item"><p id="uniqueCount">0</p><span>Unique</span></div>
+            <div class="stat-item"><p id="removedCount">0</p><span>Removed</span></div>
+        </div>
+    </div>
+    <input type="file" id="fileInput" accept=".txt" style="display: none;">
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const getEl = (id) => document.getElementById(id);
+
+        const inputArea = getEl('input-area');
+        const outputArea = getEl('output-area');
+        const shareBtn = getEl('shareBtn');
+        const shareBtnText = getEl('shareBtnText');
+        const ignoreCaseCheck = getEl('ignoreCaseCheck');
+        const sortCheck = getEl('sortCheck');
+        const removeEmptyCheck = getEl('removeEmptyCheck');
+        const originalCountEl = getEl('originalCount');
+        const uniqueCountEl = getEl('uniqueCount');
+        const removedCountEl = getEl('removedCount');
+        const wordCountEl = getEl('wordCount');
+        const charCountEl = getEl('charCount');
+        const copyBtn = getEl('copyBtn');
+        const clearBtn = getEl('clearBtn');
+        const themeToggle = getEl('theme-toggle');
+        const fileInput = getEl('fileInput');
+        const uploadBtn = getEl('uploadBtn');
+        const downloadBtn = getEl('downloadBtn');
+
+        const encode = (str) => btoa(unescape(encodeURIComponent(str)));
+        const decode = (str) => decodeURIComponent(escape(atob(str)));
+
+        let debounceTimer;
+        const debouncedProcess = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(processLines, 300);
+        };
+
+        function processLines() {
+            const content = inputArea.value;
+            const lines = content.split('\n');
+            let filteredLines = [...lines];
+            if (removeEmptyCheck.checked) {
+                filteredLines = filteredLines.filter(line => line.trim() !== "");
+            }
+            const originalCount = (removeEmptyCheck.checked) ? filteredLines.length : lines.length;
+            let uniqueLines;
+            if (ignoreCaseCheck.checked) {
+                const linesMap = new Map();
+                filteredLines.forEach(line => {
+                    const lowerLine = line.toLowerCase().trim();
+                    if (!linesMap.has(lowerLine)) linesMap.set(lowerLine, line.trim());
+                });
+                uniqueLines = Array.from(linesMap.values());
+            } else {
+                const trimmedLines = filteredLines.map(line => line.trim());
+                uniqueLines = Array.from(new Set(trimmedLines));
+            }
+            if (sortCheck.checked) {
+                uniqueLines.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+            }
+            const outputText = uniqueLines.join('\n');
+            outputArea.value = outputText;
+            updateStats(originalCount, uniqueLines.length, content);
+        }
+        
+        function updateStats(originalCount, uniqueCount, fullText) {
+            const words = fullText.trim().split(/\s+/).filter(Boolean);
+            originalCountEl.textContent = originalCount;
+            uniqueCountEl.textContent = uniqueCount;
+            removedCountEl.textContent = Math.max(0, originalCount - uniqueCount);
+            wordCountEl.textContent = (fullText.trim() === '') ? 0 : words.length;
+            charCountEl.textContent = fullText.length;
+        }
+
+        function showToast(message, duration = 3000) {
+            const existingToast = document.querySelector('.toast');
+            if(existingToast) existingToast.remove();
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.bottom = '2rem'; toast.style.transform = 'translateX(-50%) scale(1)'; }, 10);
+            setTimeout(() => {
+                toast.style.bottom = '-100px';
+                setTimeout(() => { if(document.body.contains(toast)) document.body.removeChild(toast); }, 500);
+            }, duration);
+        }
+
+        function copyOutput() {
+            if (outputArea.value.trim() === '') {
+                showToast('Nothing to copy!'); return;
+            }
+            navigator.clipboard.writeText(outputArea.value).then(() => {
+                showToast('Output copied to clipboard!');
+            }).catch(err => {
+                showToast('Failed to copy.'); console.error('Copy failed', err);
+            });
+        }
+        
+        // ##### NEW AND IMPROVED SHARE FUNCTION #####
+        async function handleShare() {
+            const state = {
+                text: inputArea.value,
+                options: {
+                    ignoreCase: ignoreCaseCheck.checked,
+                    sort: sortCheck.checked,
+                    removeEmpty: removeEmptyCheck.checked
+                }
+            };
+            const encoded = encode(JSON.stringify(state));
+            // Use the full URL for sharing
+            const shareUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}#${encoded}`;
+            
+            // We update the history so if the user copies the URL manually it's the correct one
+            window.history.replaceState({path: shareUrl}, '', shareUrl);
+            
+            const shareData = {
+                title: 'Sync Console Content',
+                text: 'Check out this processed text',
+                url: shareUrl
+            };
+
+            // Check if the browser supports the Web Share API
+            if (navigator.share) {
+                try {
+                    await navigator.share(shareData);
+                    // You can add feedback here if you want, e.g., showToast('Shared successfully!');
+                } catch (err) {
+                    // This error can happen if the user closes the share dialog
+                    console.log(`Share failed: ${err.name}`);
+                }
+            } else {
+                // Fallback for browsers that don't support it
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    shareBtnText.textContent = 'Copied!';
+                    setTimeout(() => { shareBtnText.textContent = 'Share'; }, 2000);
+                });
+            }
+        }
+
+
+        function loadStateFromUrl() {
+            try {
+                if (window.location.hash.length > 1) {
+                    const encoded = window.location.hash.substring(1);
+                    const state = JSON.parse(decode(encoded));
+                    inputArea.value = state.text;
+                    ignoreCaseCheck.checked = state.options.ignoreCase;
+                    sortCheck.checked = state.options.sort;
+                    removeEmptyCheck.checked = state.options.removeEmpty;
+                    processLines();
+                    showToast('Content loaded from URL!');
+                }
+            } catch (error) {
+                console.error("Failed to load state from URL:", error);
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+        }
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            getEl('theme-icon-sun').style.display = theme === 'dark' ? 'none' : 'block';
+            getEl('theme-icon-moon').style.display = theme === 'dark' ? 'block' : 'none';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        });
+
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    inputArea.value = e.target.result;
+                    processLines();
+                    showToast(`${file.name} loaded successfully!`);
+                };
+                reader.readAsText(file);
+            }
+            fileInput.value = '';
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (outputArea.value.trim() === '') {
+                showToast('Nothing to download!'); return;
+            }
+            const blob = new Blob([outputArea.value], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'output.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        inputArea.addEventListener('input', debouncedProcess);
+        [ignoreCaseCheck, sortCheck, removeEmptyCheck].forEach(cb => cb.addEventListener('change', processLines));
+        shareBtn.addEventListener('click', handleShare); // Use the new function
+        copyBtn.addEventListener('click', copyOutput);
+        clearBtn.addEventListener('click', () => {
+            inputArea.value = '';
+            processLines();
+            inputArea.focus();
+        });
+        
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        setTheme(savedTheme);
+        loadStateFromUrl();
+        if(!window.location.hash) {
+            processLines();
+        }
+    });
+    </script>
+</body>
+</html>
