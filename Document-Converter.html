@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Document Converter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(90deg, #FDBB2D 0%, #D4AF37 50%, #B8860B 100%);
+      --background-start: #0F0C29;
+      --background-mid: #302B63;
+      --background-end: #24243E;
+      --surface-color: rgba(26, 26, 42, 0.8);
+      --text-color: #E0E0E0;
+      --text-muted-color: #A0A0A0;
+      --border-color: rgba(255, 215, 0, 0.2);
+      --danger-color: #ff5252;
+      --success-color: #00C851;
+      --border-radius: 16px;
+      --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-color);
+      background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
+      background-size: 400% 400%;
+      animation: gradientBG 20s ease infinite;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      max-width: 500px;
+      width: 100%;
+      background: var(--surface-color);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color);
+      padding: 2.5rem;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .hidden { display: none !important; }
+
+    /* --- States --- */
+    .state-container { animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    h1 {
+        margin-top: 0;
+        margin-bottom: 2rem;
+        font-weight: 700;
+        font-size: 2rem;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* --- Upload State --- */
+    #upload-container .upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: var(--border-radius);
+      padding: 3rem 2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    #upload-container .upload-area.drag-over {
+      border-color: #FDBB2D;
+      box-shadow: 0 0 15px rgba(253, 187, 45, 0.3);
+    }
+    #upload-container .upload-area strong { color: #FDBB2D; }
+    #upload-container p { color: var(--text-muted-color); }
+    #docInput { display: none; }
+
+    /* --- Config State --- */
+    .file-info {
+        background-color: rgba(0,0,0,0.3);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        text-align: left;
+    }
+    .file-info .filename { font-weight: 600; word-break: break-all; }
+    .file-info .filetype { font-size: 0.8rem; color: var(--text-muted-color); text-transform: uppercase; }
+
+    .config-group { margin-bottom: 1.5rem; text-align: left; }
+    .config-group label {
+        display: block;
+        margin-bottom: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted-color);
+    }
+
+    .format-selector { display: flex; gap: 10px; }
+    .format-selector .format-btn {
+        flex: 1;
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 2px solid var(--border-color);
+        background: transparent;
+        color: var(--text-color);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .format-selector .format-btn.active {
+        background-color: #FDBB2D;
+        border-color: #FDBB2D;
+        color: #111;
+        font-weight: 600;
+    }
+    
+    .slider-group { display: flex; align-items: center; gap: 1rem; }
+    .slider-group input[type="range"] { flex: 1; }
+    .slider-group #fontSizeValue { font-weight: 600; min-width: 40px; text-align: right; }
+
+    .button {
+      background: var(--primary-gradient);
+      color: #111;
+      border: none;
+      padding: 0.9rem 2rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+      margin-top: 2rem;
+      transition: all 0.3s ease;
+      background-size: 200% auto;
+    }
+    .button:hover:not(:disabled) {
+      background-position: right center;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+    }
+    .button:disabled { background: #444; color: #888; cursor: not-allowed; }
+    .button.secondary {
+        background: none;
+        border: 2px solid var(--text-muted-color);
+        color: var(--text-muted-color);
+    }
+    .button.secondary:hover { background-color: var(--text-muted-color); color: #111; box-shadow: none; }
+    
+    /* Processing and Results */
+    #processing-container h3, #results-container h3 {
+        font-size: 1.8rem;
+    }
+    #results-container h3 { color: var(--success-color); }
+    .loader {
+        width: 50px; height: 50px; border-radius: 50%;
+        display: inline-block; border-top: 3px solid #FDBB2D;
+        border-right: 3px solid transparent; animation: spin 1s linear infinite; margin-bottom: 1.5rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .error-message {
+      background-color: rgba(255, 82, 82, 0.2);
+      border: 1px solid var(--danger-color);
+      color: var(--danger-color);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Document Converter</h1>
+    
+    <div id="upload-container" class="state-container">
+      <label for="docInput" class="upload-area">
+        <p>Drag & Drop Your Document Here</p>
+        <p>(.txt or .docx)</p>
+        <p>or <strong>Browse File</strong></p>
+      </label>
+      <input type="file" id="docInput" accept=".txt,.docx" />
+      <div id="uploadError" class="error-message hidden"></div>
+    </div>
+    
+    <div id="config-container" class="state-container hidden">
+      <div class="file-info">
+        <div id="fileName" class="filename"></div>
+        <div id="fileType" class="filetype"></div>
+      </div>
+      
+      <div class="config-group">
+        <label>Convert to:</label>
+        <div class="format-selector">
+          <button class="format-btn active" data-format="pdf">PDF</button>
+          <button class="format-btn" data-format="txt">Text</button>
+        </div>
+      </div>
+      
+      <div id="pdfOptions" class="config-group">
+        <label for="fontSize">Font Size:</label>
+        <div class="slider-group">
+            <input type="range" id="fontSize" min="8" max="24" value="12" step="1">
+            <span id="fontSizeValue">12 pt</span>
+        </div>
+      </div>
+      
+      <button class="button" id="convertBtn">Convert</button>
+      <button class="button secondary" id="cancelBtn">Choose Another File</button>
+    </div>
+
+    <div id="processing-container" class="state-container hidden">
+      <div class="loader"></div>
+      <h3>Converting... Please wait.</h3>
+    </div>
+
+    <div id="results-container" class="state-container hidden">
+      <h3>Conversion Successful!</h3>
+      <a id="downloadLink" class="button" download>Download File</a>
+      <button id="resetBtn" class="button secondary">Convert Another File</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { PDFDocument, rgb, StandardFonts } from 'https://cdn.skypack.dev/pdf-lib';
+
+    const states = {
+      upload: document.getElementById('upload-container'),
+      config: document.getElementById('config-container'),
+      processing: document.getElementById('processing-container'),
+      results: document.getElementById('results-container'),
+    };
+    
+    const docInput = document.getElementById('docInput');
+    const uploadArea = document.querySelector('.upload-area');
+    const uploadError = document.getElementById('uploadError');
+    const fileNameEl = document.getElementById('fileName');
+    const fileTypeEl = document.getElementById('fileType');
+    const formatBtns = document.querySelectorAll('.format-btn');
+    const pdfOptions = document.getElementById('pdfOptions');
+    const fontSizeSlider = document.getElementById('fontSize');
+    const fontSizeValue = document.getElementById('fontSizeValue');
+    const convertBtn = document.getElementById('convertBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const downloadLink = document.getElementById('downloadLink');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let rawText = '';
+    let originalFile = null;
+    let selectedFormat = 'pdf';
+
+    function showState(state) {
+      Object.values(states).forEach(s => s.classList.add('hidden'));
+      if (states[state]) states[state].classList.remove('hidden');
+    }
+
+    // --- File Handling ---
+    docInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+    uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+    uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        handleFile(e.dataTransfer.files[0]);
+    });
+
+    async function handleFile(file) {
+      if (!file) return;
+      
+      uploadError.classList.add('hidden');
+      const extension = file.name.split('.').pop().toLowerCase();
+      
+      try {
+        if (extension === 'txt') {
+          rawText = await file.text();
+        } else if (extension === 'docx') {
+          const arrayBuffer = await file.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          rawText = result.value;
+        } else {
+          throw new Error('Unsupported file type. Please upload a .txt or .docx file.');
+        }
+        
+        originalFile = file;
+        fileNameEl.textContent = file.name;
+        fileTypeEl.textContent = `${extension.toUpperCase()} File`;
+        showState('config');
+      } catch (err) {
+        uploadError.textContent = err.message;
+        uploadError.classList.remove('hidden');
+        console.error(err);
+      }
+    }
+
+    // --- Config Logic ---
+    formatBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        formatBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedFormat = btn.dataset.format;
+        pdfOptions.style.display = selectedFormat === 'pdf' ? 'block' : 'none';
+      });
+    });
+
+    fontSizeSlider.addEventListener('input', (e) => {
+        fontSizeValue.textContent = `${e.target.value} pt`;
+    });
+
+    cancelBtn.addEventListener('click', reset);
+    resetBtn.addEventListener('click', reset);
+
+    function reset() {
+        rawText = '';
+        originalFile = null;
+        docInput.value = '';
+        if(downloadLink.href) URL.revokeObjectURL(downloadLink.href);
+        showState('upload');
+    }
+
+    // --- Conversion Logic ---
+    convertBtn.addEventListener('click', async () => {
+      showState('processing');
+      
+      // Use a short timeout to allow the UI to update before the heavy work starts
+      setTimeout(async () => {
+        try {
+          let blob;
+          let filename = originalFile.name.split('.').slice(0, -1).join('.');
+
+          if (selectedFormat === 'txt') {
+            blob = new Blob([rawText], { type: 'text/plain' });
+            filename += '.txt';
+          } else if (selectedFormat === 'pdf') {
+            const pdfBytes = await createPdf(rawText, { fontSize: parseInt(fontSizeSlider.value) });
+            blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            filename += '.pdf';
+          }
+          
+          const url = URL.createObjectURL(blob);
+          downloadLink.href = url;
+          downloadLink.download = filename;
+          showState('results');
+
+        } catch(err) {
+            alert('An error occurred during conversion.');
+            console.error(err);
+            reset();
+        }
+      }, 50);
+    });
+
+    async function createPdf(text, options) {
+        const pdfDoc = await PDFDocument.create();
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+        
+        const pageMargin = 50;
+        const maxWidth = 595 - pageMargin * 2; // A4 width
+        const maxHeight = 842 - pageMargin * 2; // A4 height
+        
+        let currentPage = pdfDoc.addPage();
+        let y = maxHeight;
+
+        const paragraphs = text.split('\n');
+        
+        for (const paragraph of paragraphs) {
+            const words = paragraph.split(' ');
+            let line = '';
+            
+            for (const word of words) {
+                const testLine = line + word + ' ';
+                const textWidth = font.widthOfTextAtSize(testLine, options.fontSize);
+                
+                if (textWidth > maxWidth) {
+                    if (y < options.fontSize + 2) {
+                        currentPage = pdfDoc.addPage();
+                        y = maxHeight;
+                    }
+                    currentPage.drawText(line, { x: pageMargin, y, font, size: options.fontSize, color: rgb(0,0,0) });
+                    y -= options.fontSize + 2; // Line spacing
+                    line = word + ' ';
+                } else {
+                    line = testLine;
+                }
+            }
+            
+            if (y < options.fontSize + 2) {
+                currentPage = pdfDoc.addPage();
+                y = maxHeight;
+            }
+            currentPage.drawText(line, { x: pageMargin, y, font, size: options.fontSize, color: rgb(0,0,0) });
+            y -= options.fontSize + 4; // Paragraph spacing
+        }
+        
+        return await pdfDoc.save();
+    }
+    
+    // Initial state
+    showState('upload');
+  </script>
+</body>
+</html>
