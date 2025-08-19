@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Premium PDF to Word Converter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #8e44ad;
+      --secondary-color: #3498db;
+      --background-color: #121212;
+      --surface-color: rgba(30, 30, 30, 0.7);
+      --text-color: #ecf0f1;
+      --text-color-light: #bdc3c7;
+      --border-color: rgba(255, 255, 255, 0.1);
+      --success-color: #2ecc71;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--background-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-image: linear-gradient(45deg, #1a1a1a 25%, transparent 25%), linear-gradient(-45deg, #1a1a1a 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #1a1a1a 75%), linear-gradient(-45deg, transparent 75%, #1a1a1a 75%);
+      background-size: 20px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 550px;
+      padding: 40px;
+      background: var(--surface-color);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 2rem;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .header p {
+        color: var(--text-color-light);
+        margin-top: 5px;
+    }
+
+    .upload-area {
+      border: 2px dashed var(--border-color);
+      border-radius: 15px;
+      padding: 40px 20px;
+      margin-top: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .upload-area.drag-over {
+      border-color: var(--primary-color);
+      background-color: rgba(142, 68, 173, 0.1);
+    }
+    
+    .upload-area__icon {
+        width: 60px;
+        height: 60px;
+        color: var(--text-color-light);
+        margin-bottom: 15px;
+    }
+    
+    .upload-area__text {
+        color: var(--text-color-light);
+        font-weight: 300;
+    }
+    
+    .upload-area__text span {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-info {
+        text-align: left;
+        margin-top: 30px;
+        background: rgba(0,0,0,0.2);
+        padding: 15px;
+        border-radius: 10px;
+    }
+    
+    .file-info p {
+        margin: 0;
+        font-weight: 300;
+        word-break: break-all;
+    }
+
+    .file-info p strong {
+        font-weight: 600;
+    }
+
+    .progress-area {
+        margin-top: 30px;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 10px;
+        background: rgba(0,0,0,0.3);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .progress {
+        width: 0%;
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        transition: width 0.5s ease;
+    }
+
+    #status {
+        margin-top: 10px;
+        font-weight: 300;
+        min-height: 20px;
+        transition: color 0.3s ease;
+    }
+
+    #status.success {
+        color: var(--success-color);
+    }
+
+    .action-button {
+      background-image: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 30px;
+      width: 100%;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .action-button:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    
+    .action-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    /* Hide elements by default */
+    .hidden {
+        display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>PDF to Word Converter</h1>
+      <p>Drag, Drop, and Convert with ease</p>
+    </div>
+    
+    <input type="file" id="pdfUpload" accept="application/pdf" />
+
+    <label for="pdfUpload" id="uploadArea" class="upload-area">
+        <svg class="upload-area__icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+        <p class="upload-area__text">Drag & drop your file here or <span>browse</span></p>
+    </label>
+
+    <div id="fileInfoArea" class="file-info hidden">
+        <p><strong>File Name:</strong> <span id="fileName"></span></p>
+        <p><strong>File Size:</strong> <span id="fileSize"></span></p>
+    </div>
+
+    <div id="progressArea" class="progress-area hidden">
+        <div class="progress-bar">
+            <div id="progress" class="progress"></div>
+        </div>
+        <p id="status"></p>
+    </div>
+    
+    <div id="postConversion" class="hidden">
+        <div class="button-group">
+            <a id="downloadLink" class="action-button" download="TOOLS_DOZI.docx" style="text-decoration: none; display: flex; justify-content: center; align-items: center;">Download File</a>
+            <button id="resetBtn" class="action-button">Convert Another</button>
+        </div>
+    </div>
+
+
+    <button id="convertBtn" class="action-button hidden">Convert to Word</button>
+
+  </div>
+
+  <script>
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('pdfUpload');
+    const fileInfoArea = document.getElementById('fileInfoArea');
+    const fileNameEl = document.getElementById('fileName');
+    const fileSizeEl = document.getElementById('fileSize');
+    const progressArea = document.getElementById('progressArea');
+    const progress = document.getElementById('progress');
+    const status = document.getElementById('status');
+    const convertBtn = document.getElementById('convertBtn');
+    const postConversion = document.getElementById('postConversion');
+    const downloadLink = document.getElementById('downloadLink');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let selectedFile;
+    let downloadableUrl = null;
+
+    // Drag and Drop events
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('drag-over');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        handleFile(files[0]);
+      }
+    });
+
+    // File input change event
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files.length > 0) {
+        handleFile(fileInput.files[0]);
+      }
+    });
+    
+    // Button click events
+    convertBtn.addEventListener('click', convertToWord);
+    resetBtn.addEventListener('click', resetUI);
+
+    function handleFile(file) {
+      if (file.type !== 'application/pdf') {
+        alert('Please select a PDF file.');
+        return;
+      }
+      
+      selectedFile = file;
+      fileNameEl.textContent = file.name;
+      fileSizeEl.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+
+      uploadArea.classList.add('hidden');
+      fileInfoArea.classList.remove('hidden');
+      convertBtn.classList.remove('hidden');
+    }
+
+    function convertToWord() {
+      if (!selectedFile) return;
+
+      convertBtn.classList.add('hidden');
+      progressArea.classList.remove('hidden');
+      convertBtn.disabled = true;
+
+      status.textContent = 'Converting... 0%';
+      progress.style.width = '0%';
+      
+      // Simulate conversion progress
+      let p = 0;
+      const interval = setInterval(() => {
+        p += Math.floor(Math.random() * 10) + 5;
+        if (p > 100) p = 100;
+        progress.style.width = `${p}%`;
+        status.textContent = `Converting... ${p}%`;
+        if (p === 100) {
+          clearInterval(interval);
+          setTimeout(finishConversion, 500);
+        }
+      }, 300);
+    }
+    
+    function finishConversion() {
+        status.textContent = 'Conversion Successful! Your file is ready.';
+        status.classList.add('success');
+        
+        // Create a blob for the mock Word document
+        const blob = new Blob(["This is a mock Word document content from TOOLS_DOZI."], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        
+        // Revoke the old URL if it exists to prevent memory leaks
+        if (downloadableUrl) {
+            URL.revokeObjectURL(downloadableUrl);
+        }
+        
+        // Create a new URL for the blob
+        downloadableUrl = URL.createObjectURL(blob);
+        
+        // Set the href of the download link
+        downloadLink.href = downloadableUrl;
+        
+        postConversion.classList.remove('hidden');
+    }
+
+    function resetUI() {
+        // Revoke the URL when resetting
+        if (downloadableUrl) {
+            URL.revokeObjectURL(downloadableUrl);
+            downloadableUrl = null;
+        }
+    
+        selectedFile = null;
+        fileInput.value = '';
+        
+        fileInfoArea.classList.add('hidden');
+        progressArea.classList.add('hidden');
+        postConversion.classList.add('hidden');
+        uploadArea.classList.remove('hidden');
+        
+        status.textContent = '';
+        status.classList.remove('success');
+        progress.style.width = '0%';
+        convertBtn.disabled = false;
+    }
+  </script>
+</body>
+</html>
