@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cosmic Gold Writing Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-start: #0F0C29;
+            --bg-mid: #302B63;
+            --bg-end: #24243E;
+            --surface-color: rgba(30, 30, 42, 0.7);
+            --border-color: rgba(255, 215, 0, 0.2);
+            --primary-text-color: #F0F0F0;
+            --secondary-text-color: #A0A0A0;
+            --gold-start: #FDBB2D;
+            --gold-end: #D4AF37;
+            --gold-gradient: linear-gradient(45deg, var(--gold-start), var(--gold-end));
+            --gold-glow-color: rgba(253, 187, 45, 0.3);
+            --success-color: #28a745;
+            --border-radius: 12px;
+            --transition-speed: 0.3s;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: linear-gradient(-45deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--primary-text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--surface-color);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2rem 2.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.25rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .text-area {
+            width: 100%;
+            min-height: 200px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.2);
+            color: var(--primary-text-color);
+            font-size: 1rem;
+            font-family: 'Lato', sans-serif;
+            outline: none;
+            transition: all var(--transition-speed);
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+        .text-area:focus {
+            border-color: var(--gold-start);
+            box-shadow: 0 0 15px var(--gold-glow-color);
+        }
+        /* Custom Placeholder for contenteditable div */
+        .text-area:empty::before {
+            content: 'Start writing here...';
+            color: var(--secondary-text-color);
+            pointer-events: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-family: 'Roboto Mono', monospace;
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+        }
+        .stat-item span { color: var(--secondary-text-color); font-size: 0.8rem; }
+        .stat-item p { font-size: 1.25rem; font-weight: 600; color: var(--primary-text-color); }
+
+        .goal-tracker {
+            margin-bottom: 1.5rem;
+        }
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        .goal-header label { color: var(--secondary-text-color); }
+        .goal-input {
+            width: 80px;
+            background: none;
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--primary-text-color);
+            text-align: right;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1rem;
+        }
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+        .progress-bar-fg {
+            height: 100%;
+            width: 0%;
+            background: var(--gold-gradient);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .progress-bar-fg.completed {
+            background: linear-gradient(45deg, var(--success-color), #34d399);
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+        .btn {
+            padding: 0.75rem 1.25rem;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--secondary-text-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-speed);
+        }
+        .btn:hover {
+            border-color: var(--gold-start);
+            color: var(--gold-start);
+            transform: translateY(-2px);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--success-color);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            z-index: 100;
+            transition: bottom 0.5s ease-in-out;
+        }
+        
+        @media (max-width: 600px) {
+            .container { padding: 1.5rem; }
+            h1 { font-size: 2rem; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Writing Console</h1>
+
+        <div id="textBox" class="text-area" contenteditable="true"></div>
+        
+        <div class="stats-grid">
+            <div class="stat-item">
+                <p id="charCount">0</p>
+                <span>Characters</span>
+            </div>
+            <div class="stat-item">
+                <p id="wordCount">0</p>
+                <span>Words</span>
+            </div>
+            <div class="stat-item">
+                <p id="sentenceCount">0</p>
+                <span>Sentences</span>
+            </div>
+            <div class="stat-item">
+                <p id="paragraphCount">0</p>
+                <span>Paragraphs</span>
+            </div>
+            <div class="stat-item">
+                <p id="readingTime">0</p>
+                <span>Min Read</span>
+            </div>
+        </div>
+
+        <div class="goal-tracker">
+            <div class="goal-header">
+                <label for="goalInput">Word Count Goal</label>
+                <input type="number" id="goalInput" class="goal-input" value="500">
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fg" id="progressBar"></div>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn" id="btnCopy">Copy Text</button>
+            <button class="btn" id="btnClear">Clear All</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const textBox = document.getElementById('textBox');
+        const goalInput = document.getElementById('goalInput');
+        const progressBar = document.getElementById('progressBar');
+        
+        const statElements = {
+            char: document.getElementById('charCount'),
+            word: document.getElementById('wordCount'),
+            sentence: document.getElementById('sentenceCount'),
+            paragraph: document.getElementById('paragraphCount'),
+            readingTime: document.getElementById('readingTime')
+        };
+
+        const btnCopy = document.getElementById('btnCopy');
+        const btnClear = document.getElementById('btnClear');
+
+        function updateAllCounts() {
+            const text = textBox.textContent; // Use textContent for contenteditable div
+            
+            // Characters
+            const charCount = text.length;
+            statElements.char.textContent = charCount;
+
+            // Words
+            const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+            const wordCount = text.trim() === '' ? 0 : words.length;
+            statElements.word.textContent = wordCount;
+
+            // Sentences
+            const sentenceMatches = text.match(/[^\.!\?]+[\.!\?]+/g);
+            const sentenceCount = sentenceMatches ? sentenceMatches.length : 0;
+            statElements.sentence.textContent = sentenceCount;
+
+            // Paragraphs
+            const paragraphs = text.split(/\n+/).filter(p => p.trim().length > 0);
+            const paragraphCount = paragraphs.length;
+            statElements.paragraph.textContent = paragraphCount;
+
+            // Reading Time
+            const readingTime = Math.ceil(wordCount / 200); // Average 200 WPM
+            statElements.readingTime.textContent = readingTime;
+            
+            // Update Goal Tracker
+            updateGoalProgress(wordCount);
+        }
+
+        function updateGoalProgress(wordCount) {
+            const goal = parseInt(goalInput.value) || 0;
+            if (goal > 0) {
+                const progress = Math.min((wordCount / goal) * 100, 100);
+                progressBar.style.width = `${progress}%`;
+                
+                progressBar.classList.toggle('completed', progress >= 100);
+
+            } else {
+                progressBar.style.width = '0%';
+                progressBar.classList.remove('completed');
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.bottom = '2rem';
+            }, 10);
+            
+            setTimeout(() => {
+                toast.style.bottom = '-100px';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 3000);
+        }
+
+        // Event Listeners
+        textBox.addEventListener('input', updateAllCounts);
+        goalInput.addEventListener('input', () => updateAllCounts());
+
+        btnClear.addEventListener('click', () => {
+            textBox.textContent = '';
+            updateAllCounts();
+        });
+
+        btnCopy.addEventListener('click', () => {
+            if (textBox.textContent === '') return;
+            navigator.clipboard.writeText(textBox.textContent).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+            });
+        });
+
+        // Initial count
+        updateAllCounts();
+    });
+    </script>
+</body>
+</html>
