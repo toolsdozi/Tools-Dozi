@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Premium Scientific Calculator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+    :root {
+      --primary-gradient: linear-gradient(90deg, #FDBB2D 0%, #D4AF37 50%, #B8860B 100%);
+      --background-start: #0F0C29; --background-mid: #302B63; --background-end: #24243E;
+      --surface-color: rgba(26, 26, 42, 0.85); --text-color: #E0E0E0; --text-muted-color: #A0A0A0;
+      --border-color: rgba(255, 215, 0, 0.2); --success-color: #00C851;
+      --border-radius: 16px; --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --btn-bg: rgba(255, 255, 255, 0.05);
+      --btn-hover-bg: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: 'Inter', sans-serif; color: var(--text-color);
+      background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
+      background-size: 400% 400%; animation: gradientBG 20s ease infinite;
+      display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    .calculator {
+        width: 100%; max-width: 420px;
+        background: var(--surface-color); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+        border: 1px solid var(--border-color); padding: 1.5rem;
+    }
+
+    .display {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        text-align: right;
+        font-family: 'Roboto Mono', monospace;
+        word-wrap: break-word;
+        word-break: break-all;
+    }
+    .display .previous-operand {
+        min-height: 24px;
+        font-size: 1rem;
+        color: var(--text-muted-color);
+    }
+    .display .current-operand {
+        min-height: 48px;
+        font-size: 2.5rem;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .calculator-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+    }
+
+    .button {
+        background: var(--btn-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        font-size: 1.2rem;
+        color: var(--text-color);
+        cursor: pointer;
+        padding: 1.2rem 0;
+        transition: all 0.2s ease;
+        -webkit-tap-highlight-color: transparent; /* For mobile */
+    }
+
+    .button:hover {
+        background: var(--btn-hover-bg);
+        border-color: #FDBB2D;
+    }
+    .button:active {
+        transform: scale(0.95);
+    }
+
+    .button.op { color: #FDBB2D; font-size: 1.5rem; }
+    .button.func { color: #87CEEB; }
+    .button.span-2 { grid-column: span 2; }
+    .button.equals { background: var(--primary-gradient); color: #111; font-weight: bold; border: none; }
+    
+    .toggle-switch {
+        grid-column: 1 / -1; /* Span full width */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: var(--btn-bg);
+        border-radius: 8px;
+        padding: 5px;
+        margin-bottom: 10px;
+    }
+    .toggle-switch button {
+        background: transparent;
+        border: none;
+        color: var(--text-muted-color);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+    .toggle-switch button.active {
+        background: #FDBB2D;
+        color: #111;
+    }
+    </style>
+</head>
+<body>
+
+    <div class="calculator">
+        <div class="display">
+            <div class="previous-operand" data-previous-operand></div>
+            <div class="current-operand" data-current-operand>0</div>
+        </div>
+
+        <div class="calculator-grid">
+            <div class="toggle-switch">
+                <button class="active" data-angle-mode="deg">DEG</button>
+                <button data-angle-mode="rad">RAD</button>
+            </div>
+            
+            <button class="button func" data-function="sqrt">√</button>
+            <button class="button func" data-function="sq">x²</button>
+            <button class="button func" data-function="pow">xʸ</button>
+            <button class="button" data-all-clear>AC</button>
+            <button class="button" data-delete>⌫</button>
+
+            <button class="button func" data-function="sin">sin</button>
+            <button class="button" data-number>7</button>
+            <button class="button" data-number>8</button>
+            <button class="button" data-number>9</button>
+            <button class="button op" data-operation="/">÷</button>
+            
+            <button class="button func" data-function="cos">cos</button>
+            <button class="button" data-number>4</button>
+            <button class="button" data-number>5</button>
+            <button class="button" data-number>6</button>
+            <button class="button op" data-operation="*">×</button>
+
+            <button class="button func" data-function="tan">tan</button>
+            <button class="button" data-number>1</button>
+            <button class="button" data-number>2</button>
+            <button class="button" data-number>3</button>
+            <button class="button op" data-operation="-">-</button>
+
+            <button class="button func" data-constant="PI">π</button>
+            <button class="button" data-number>0</button>
+            <button class="button" data-number>.</button>
+            <button class="button equals" data-equals>=</button>
+            <button class="button op" data-operation="+">+</button>
+        </div>
+    </div>
+
+    <script>
+        class Calculator {
+            constructor(previousOperandTextElement, currentOperandTextElement) {
+                this.previousOperandTextElement = previousOperandTextElement;
+                this.currentOperandTextElement = currentOperandTextElement;
+                this.angleMode = 'deg'; // 'deg' or 'rad'
+                this.clear();
+            }
+
+            clear() {
+                this.currentOperand = '0';
+                this.previousOperand = '';
+                this.operation = undefined;
+                this.updateDisplay();
+            }
+
+            delete() {
+                if (this.currentOperand === '0') return;
+                this.currentOperand = this.currentOperand.toString().slice(0, -1);
+                if (this.currentOperand === '') this.currentOperand = '0';
+                this.updateDisplay();
+            }
+
+            appendNumber(number) {
+                if (number === '.' && this.currentOperand.includes('.')) return;
+                if (this.currentOperand === '0' && number !== '.') this.currentOperand = '';
+                this.currentOperand = this.currentOperand.toString() + number.toString();
+            }
+            
+            setConstant(constant) {
+                if(constant === 'PI') this.currentOperand = Math.PI;
+            }
+
+            chooseOperation(operation) {
+                if (this.currentOperand === '') return;
+                if (this.previousOperand !== '') {
+                    this.compute();
+                }
+                this.operation = operation;
+                this.previousOperand = this.currentOperand;
+                this.currentOperand = '';
+            }
+
+            compute() {
+                let computation;
+                const prev = parseFloat(this.previousOperand);
+                const current = parseFloat(this.currentOperand);
+                if (isNaN(prev) || isNaN(current)) return;
+
+                switch (this.operation) {
+                    case '+': computation = prev + current; break;
+                    case '-': computation = prev - current; break;
+                    case '*': computation = prev * current; break;
+                    case '/': computation = prev / current; break;
+                    case 'pow': computation = Math.pow(prev, current); break;
+                    default: return;
+                }
+                this.currentOperand = computation;
+                this.operation = undefined;
+                this.previousOperand = '';
+            }
+
+            handleFunction(func) {
+                const current = parseFloat(this.currentOperand);
+                if(isNaN(current)) return;
+                let result;
+                
+                if (this.angleMode === 'deg' && ['sin', 'cos', 'tan'].includes(func)) {
+                    const angle = current * (Math.PI / 180);
+                    switch(func) {
+                        case 'sin': result = Math.sin(angle); break;
+                        case 'cos': result = Math.cos(angle); break;
+                        case 'tan': result = Math.tan(angle); break;
+                    }
+                } else {
+                     switch(func) {
+                        case 'sin': result = Math.sin(current); break;
+                        case 'cos': result = Math.cos(current); break;
+                        case 'tan': result = Math.tan(current); break;
+                        case 'sqrt': result = Math.sqrt(current); break;
+                        case 'sq': result = Math.pow(current, 2); break;
+                        default: return;
+                    }
+                }
+                this.currentOperand = result;
+            }
+
+            updateDisplay() {
+                this.currentOperandTextElement.innerText = this.currentOperand;
+                if (this.operation != null) {
+                    let opDisplay = this.operation;
+                    if (opDisplay === '*') opDisplay = '×';
+                    if (opDisplay === '/') opDisplay = '÷';
+                    if (opDisplay === 'pow') opDisplay = '^';
+                    this.previousOperandTextElement.innerText = `${this.previousOperand} ${opDisplay}`;
+                } else {
+                    this.previousOperandTextElement.innerText = '';
+                }
+            }
+
+            setAngleMode(mode) {
+                this.angleMode = mode;
+            }
+        }
+
+        const numberButtons = document.querySelectorAll('[data-number]');
+        const operationButtons = document.querySelectorAll('[data-operation]');
+        const equalsButton = document.querySelector('[data-equals]');
+        const deleteButton = document.querySelector('[data-delete]');
+        const allClearButton = document.querySelector('[data-all-clear]');
+        const functionButtons = document.querySelectorAll('[data-function]');
+        const constantButtons = document.querySelectorAll('[data-constant]');
+        const angleModeButtons = document.querySelectorAll('[data-angle-mode]');
+        const previousOperandTextElement = document.querySelector('[data-previous-operand]');
+        const currentOperandTextElement = document.querySelector('[data-current-operand]');
+
+        const calculator = new Calculator(previousOperandTextElement, currentOperandTextElement);
+
+        numberButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                calculator.appendNumber(button.innerText);
+                calculator.updateDisplay();
+            });
+        });
+
+        operationButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const operation = button.dataset.operation || button.innerText;
+                calculator.chooseOperation(operation);
+                calculator.updateDisplay();
+            });
+        });
+        
+        functionButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const func = button.dataset.function;
+                if (func === 'pow') {
+                     calculator.chooseOperation('pow');
+                } else {
+                     calculator.handleFunction(func);
+                }
+                calculator.updateDisplay();
+            });
+        });
+
+        constantButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                calculator.setConstant(button.dataset.constant);
+                calculator.updateDisplay();
+            });
+        })
+
+        equalsButton.addEventListener('click', () => {
+            calculator.compute();
+            calculator.updateDisplay();
+        });
+
+        allClearButton.addEventListener('click', () => {
+            calculator.clear();
+        });
+
+        deleteButton.addEventListener('click', () => {
+            calculator.delete();
+        });
+
+        angleModeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                angleModeButtons.forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                calculator.setAngleMode(e.target.dataset.angleMode);
+            })
+        })
+    </script>
+
+</body>
+</html>
