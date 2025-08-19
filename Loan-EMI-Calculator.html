@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Premium Loan EMI Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(90deg, #FDBB2D 0%, #D4AF37 50%, #B8860B 100%);
+      --background-start: #0F0C29; --background-mid: #302B63; --background-end: #24243E;
+      --surface-color: rgba(26, 26, 42, 0.85); --text-color: #E0E0E0; --text-muted-color: #A0A0A0;
+      --border-color: rgba(255, 215, 0, 0.2); --accent-color: #FDBB2D;
+      --c-principal: #3498db; --c-interest: #FDBB2D;
+      --border-radius: 16px; --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --transition-speed: 0.3s;
+    }
+
+    @property --p-interest {
+      syntax: '<percentage>';
+      inherits: false;
+      initial-value: 0%;
+    }
+
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0; font-family: 'Inter', sans-serif; color: var(--text-color);
+      background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
+      background-size: 400% 400%; animation: gradientBG 20s ease infinite;
+      display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    .container {
+      width: 100%; max-width: 850px;
+      background: var(--surface-color); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color); padding: 2.5rem;
+      display: flex; gap: 3rem;
+      transition: all var(--transition-speed) ease;
+    }
+    .controls, .results { flex: 1; }
+    
+    h1 {
+        margin-top: 0; margin-bottom: 2.5rem; font-weight: 700; font-size: 2rem;
+        background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        text-align: center;
+    }
+
+    .input-group { margin-bottom: 1.75rem; }
+    .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted-color); font-weight: 500; font-size: 0.9rem;}
+    .input-wrapper { display: flex; align-items: center; width: 100%; padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2);
+        color: var(--text-color); border-radius: 8px; font-family: 'Roboto Mono', monospace;
+        transition: all var(--transition-speed) ease;
+    }
+    .input-wrapper:focus-within { border-color: var(--accent-color); box-shadow: 0 0 10px rgba(253, 187, 45, 0.3); }
+    .input-wrapper span { color: var(--text-muted-color); font-size: 1.1rem; }
+    input[type="text"], input[type="number"] {
+        width: 100%; border: none; background: none; color: inherit; font-family: inherit;
+        font-size: 1.2rem; margin: 0 0.5rem; outline: none; text-align: right;
+    }
+    
+    input[type="range"] {
+        width: 100%; margin-top: 1rem; -webkit-appearance: none; background: transparent;
+    }
+    input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--accent-color) var(--progress, 0%), rgba(0,0,0,0.3) var(--progress, 0%)); }
+    input[type="range"]::-moz-range-track { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--accent-color) var(--progress, 0%), rgba(0,0,0,0.3) var(--progress, 0%)); }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; background: var(--accent-color); border-radius: 50%; margin-top: -6px; cursor: pointer; border: 2px solid var(--surface-color); transition: transform var(--transition-speed) ease; }
+    input[type="range"]::-moz-range-thumb { height: 20px; width: 20px; background: var(--accent-color); border-radius: 50%; cursor: pointer; border: 2px solid var(--surface-color); }
+    input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.1); }
+
+
+    .tenure-toggle { display: flex; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 4px; margin-left: auto;}
+    .tenure-toggle button { background: transparent; border: none; color: var(--text-muted-color); padding: 0.5rem; border-radius: 6px; cursor: pointer; font-weight: 500; flex: 1; transition: all var(--transition-speed) ease; min-width: 60px;}
+    .tenure-toggle button.active { background: var(--accent-color); color: #111; font-weight: 700; }
+
+    .results { text-align: center; border-left: 1px solid var(--border-color); padding-left: 3rem; }
+    #emi-display p { margin: 0; color: var(--text-muted-color); }
+    #emi-display span { font-size: 3rem; font-weight: 700; font-family: 'Roboto Mono', monospace; color: var(--accent-color); display: block; margin-top: 0.5rem; text-shadow: 0 0 15px rgba(253, 187, 45, 0.3); }
+
+    .chart-container { position: relative; width: 180px; height: 180px; margin: 2rem auto; }
+    #pie-chart { width: 100%; height: 100%; border-radius: 50%; background: conic-gradient(var(--c-interest) 0% var(--p-interest), var(--c-principal) var(--p-interest) 100%); transition: --p-interest 0.8s ease-in-out;}
+    .chart-legend { display: flex; justify-content: center; gap: 1.5rem; margin-top: 1.5rem; }
+    .legend-item { display: flex; align-items: center; gap: 8px; }
+    .legend-color { width: 15px; height: 15px; border-radius: 3px; }
+    .legend-principal { background-color: var(--c-principal); }
+    .legend-interest { background-color: var(--c-interest); }
+
+    .payment-details { display: flex; justify-content: space-around; gap: 1rem; margin-top: 2rem; }
+    .detail-box p { margin: 0; color: var(--text-muted-color); font-size: 0.9rem; }
+    .detail-box span { font-family: 'Roboto Mono', monospace; font-size: 1.2rem; font-weight: 500; display: block; margin-top: 0.25rem;}
+    
+    #scheduleBtn { 
+      background: none; border: 2px solid var(--text-muted-color); color: var(--text-muted-color); 
+      padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer; margin-top: 2rem;
+      font-weight: 600; font-size: 0.9rem; letter-spacing: 0.5px;
+      transition: all var(--transition-speed) ease;
+    }
+    #scheduleBtn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: flex; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: all var(--transition-speed) ease; z-index: 1000; }
+    .modal-overlay.visible { opacity: 1; visibility: visible; }
+    .modal-content { background: var(--surface-color); padding: 2rem; border-radius: var(--border-radius); border: 1px solid var(--border-color); width: 90%; max-width: 600px; max-height: 80vh; display: flex; flex-direction: column; transform: scale(0.9); transition: transform var(--transition-speed) ease;}
+    .modal-overlay.visible .modal-content { transform: scale(1); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h2 { margin: 0; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    #closeModalBtn { background: none; border: none; color: var(--text-muted-color); font-size: 2rem; cursor: pointer; line-height: 1; padding: 0;}
+    .modal-body { overflow-y: auto; }
+    .amortization-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .amortization-table th, .amortization-table td { padding: 0.75rem; text-align: right; border-bottom: 1px solid var(--border-color);}
+    .amortization-table th { font-weight: 600; color: var(--text-muted-color); position: sticky; top: 0; background: var(--surface-color); }
+    .amortization-table td { font-family: 'Roboto Mono', monospace; }
+    
+    @media (max-width: 880px) {
+        .container { flex-direction: column; max-width: 500px; gap: 2rem; }
+        .results { border-left: none; padding-left: 0; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="controls">
+        <h1>Loan EMI Calculator</h1>
+        
+        <div class="input-group">
+            <label for="loanAmount">Loan Amount</label>
+            <div class="input-wrapper">
+                <span>₹</span>
+                <input type="text" id="loanAmount" value="10,00,000">
+            </div>
+            <input type="range" id="loanAmountSlider" min="10000" max="10000000" step="10000" value="1000000">
+        </div>
+
+        <div class="input-group">
+            <label for="interestRate">Interest Rate (p.a.)</label>
+            <div class="input-wrapper">
+                <input type="number" id="interestRate" value="8.5" step="0.1">
+                <span>%</span>
+            </div>
+            <input type="range" id="interestRateSlider" min="1" max="20" step="0.1" value="8.5">
+        </div>
+
+        <div class="input-group">
+             <label for="loanTenure">Loan Tenure</label>
+             <div class="input-wrapper">
+                <input type="number" id="loanTenure" value="10">
+                <div class="tenure-toggle">
+                    <button id="tenure-years-btn" class="active">Years</button>
+                    <button id="tenure-months-btn">Months</button>
+                </div>
+             </div>
+            <input type="range" id="loanTenureSlider" min="1" max="30" step="1" value="10">
+        </div>
+    </div>
+
+    <div class="results">
+        <div id="emi-display">
+            <p>Monthly EMI</p>
+            <span>₹<span id="emi-value" data-previous-value="0">0</span></span>
+        </div>
+        <div class="chart-container">
+            <div id="pie-chart"></div>
+        </div>
+        <div class="chart-legend">
+            <div class="legend-item"><div class="legend-color legend-principal"></div><span>Principal</span></div>
+            <div class="legend-item"><div class="legend-color legend-interest"></div><span>Interest</span></div>
+        </div>
+        <div class="payment-details">
+            <div class="detail-box">
+                <p>Total Interest</p>
+                <span>₹<span id="total-interest" data-previous-value="0">0</span></span>
+            </div>
+            <div class="detail-box">
+                <p>Total Payment</p>
+                <span>₹<span id="total-payment" data-previous-value="0">0</span></span>
+            </div>
+        </div>
+        <button id="scheduleBtn">View Amortization Schedule</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="scheduleModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Amortization Schedule</h2>
+            <button id="closeModalBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <table class="amortization-table">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Principal</th>
+                        <th>Interest</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="schedule-body">
+                </tbody>
+            </table>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM Elements ---
+        const loanAmountInput = document.getElementById('loanAmount');
+        const loanAmountSlider = document.getElementById('loanAmountSlider');
+        const interestRateInput = document.getElementById('interestRate');
+        const interestRateSlider = document.getElementById('interestRateSlider');
+        const loanTenureInput = document.getElementById('loanTenure');
+        const loanTenureSlider = document.getElementById('loanTenureSlider');
+        const tenureYearsBtn = document.getElementById('tenure-years-btn');
+        const tenureMonthsBtn = document.getElementById('tenure-months-btn');
+
+        const emiValueEl = document.getElementById('emi-value');
+        const totalInterestEl = document.getElementById('total-interest');
+        const totalPaymentEl = document.getElementById('total-payment');
+        const pieChart = document.getElementById('pie-chart');
+
+        const scheduleBtn = document.getElementById('scheduleBtn');
+        const scheduleModal = document.getElementById('scheduleModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const scheduleBody = document.getElementById('schedule-body');
+
+        // --- State ---
+        let tenureMode = 'years';
+        let tenureInMonths = 120; // Internal state, always in months
+
+        // --- Formatting Functions ---
+        const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        const formatCurrency = (value) => new Intl.NumberFormat('en-IN').format(value);
+        const parseCurrency = (value) => Number(String(value).replace(/,/g, ''));
+
+        // --- Input Synchronization and Slider Progress ---
+        const syncAndUpdate = () => {
+            updateSliderProgress(loanAmountSlider);
+            updateSliderProgress(interestRateSlider);
+            updateSliderProgress(loanTenureSlider);
+            calculateEMI();
+        };
+
+        const setupInputSync = (textInput, sliderInput, isCurrency = false) => {
+            textInput.addEventListener('input', (e) => {
+                let value = isCurrency ? parseCurrency(e.target.value) : Number(e.target.value);
+                if (!isNaN(value)) {
+                    sliderInput.value = value;
+                    // **FIX 2**: Update internal tenure state on manual input
+                    if (textInput === loanTenureInput) {
+                        tenureInMonths = tenureMode === 'years' ? value * 12 : value;
+                    }
+                    syncAndUpdate();
+                }
+            });
+            textInput.addEventListener('blur', (e) => { if(isCurrency) { e.target.value = formatCurrency(parseCurrency(e.target.value)); } });
+            sliderInput.addEventListener('input', (e) => {
+                let value = Number(e.target.value);
+                textInput.value = isCurrency ? formatCurrency(value) : value;
+                 // **FIX 2**: Update internal tenure state from slider
+                if (sliderInput === loanTenureSlider) {
+                    tenureInMonths = tenureMode === 'years' ? value * 12 : value;
+                }
+                syncAndUpdate();
+            });
+        };
+        
+        setupInputSync(loanAmountInput, loanAmountSlider, true);
+        setupInputSync(interestRateInput, interestRateSlider);
+        setupInputSync(loanTenureInput, loanTenureSlider);
+
+        function updateSliderProgress(slider) {
+            const progress = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+            slider.style.setProperty('--progress', `${progress}%`);
+        }
+
+        // --- Tenure Toggle Logic (Robust Version) ---
+        function updateTenureUI() {
+            if (tenureMode === 'years') {
+                tenureYearsBtn.classList.add('active');
+                tenureMonthsBtn.classList.remove('active');
+                loanTenureSlider.min = 1;
+                loanTenureSlider.max = 30;
+                loanTenureSlider.step = 1;
+                const years = tenureInMonths / 12;
+                // **FIX 2**: Display a precise year value if not a whole number
+                const displayYears = years % 1 === 0 ? years : years.toFixed(2);
+                loanTenureInput.value = displayYears;
+                loanTenureSlider.value = years;
+            } else {
+                tenureMonthsBtn.classList.add('active');
+                tenureYearsBtn.classList.remove('active');
+                loanTenureSlider.min = 12;
+                loanTenureSlider.max = 360;
+                loanTenureSlider.step = 1;
+                loanTenureInput.value = tenureInMonths;
+                loanTenureSlider.value = tenureInMonths;
+            }
+            updateSliderProgress(loanTenureSlider);
+        }
+
+        tenureYearsBtn.addEventListener('click', () => {
+            if (tenureMode === 'years') return;
+            tenureMode = 'years';
+            updateTenureUI();
+            calculateEMI();
+        });
+
+        tenureMonthsBtn.addEventListener('click', () => {
+            if (tenureMode === 'months') return;
+            tenureMode = 'months';
+            updateTenureUI();
+            calculateEMI();
+        });
+
+        // --- Animation ---
+        function animateValue(element, end) {
+            const start = Number(element.dataset.previousValue) || 0;
+            if (start === end) return;
+            element.dataset.previousValue = end;
+            let startTimestamp = null;
+            const duration = 800;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentValue = Math.floor(progress * (end - start) + start);
+                element.textContent = formatCurrency(currentValue);
+                if (progress < 1) window.requestAnimationFrame(step);
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // --- Core Calculation ---
+        function calculateEMI() {
+            const principal = parseCurrency(loanAmountInput.value);
+            const rate = parseFloat(interestRateInput.value);
+            
+            // **FIX 1**: Check for invalid inputs
+            if (!isFinite(principal) || !isFinite(rate) || !isFinite(tenureInMonths) || principal <= 0 || rate <= 0 || tenureInMonths <= 0) {
+                updateDisplay(0, 0, 0, 0); // Reset display
+                return;
+            }
+            
+            const monthlyInterestRate = rate / 12 / 100;
+            const emi = (principal * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenureInMonths)) /
+                        (Math.pow(1 + monthlyInterestRate, tenureInMonths) - 1);
+
+            // **FIX 3**: Check for Infinite or NaN EMI
+            if (!isFinite(emi)) {
+                updateDisplay(0, 0, 0, 0);
+                return;
+            }
+
+            const totalPayment = emi * tenureInMonths;
+            const totalInterest = totalPayment - principal;
+            updateDisplay(emi, totalInterest, totalPayment, principal);
+        }
+
+        function updateDisplay(emi, interest, total, principal) {
+            animateValue(emiValueEl, Math.round(emi));
+            animateValue(totalInterestEl, Math.round(interest));
+            animateValue(totalPaymentEl, Math.round(total));
+            const interestPercent = (total > 0) ? (interest / total) * 100 : 0;
+            pieChart.style.setProperty('--p-interest', `${interestPercent.toFixed(2)}%`);
+        }
+
+        // --- Amortization Schedule ---
+        function generateAmortizationSchedule() {
+            const principal = parseCurrency(loanAmountInput.value);
+            const rate = parseFloat(interestRateInput.value);
+            if (!isFinite(principal) || !isFinite(rate) || !isFinite(tenureInMonths) || principal <= 0 || rate <= 0 || tenureInMonths <= 0) {
+                scheduleBody.innerHTML = `<tr><td colspan="4">Invalid data. Cannot generate schedule.</td></tr>`;
+                return;
+            }
+            const monthlyInterestRate = rate / 12 / 100;
+            const emi = (principal * monthlyInterestRate * Math.pow(1 + monthlyInterestRate, tenureInMonths)) / (Math.pow(1 + monthlyInterestRate, tenureInMonths) - 1);
+            let balance = principal;
+            let scheduleHTML = '';
+            for (let i = 1; i <= tenureInMonths; i++) {
+                let interestPayment = balance * monthlyInterestRate;
+                let principalPayment = emi - interestPayment;
+                balance -= principalPayment;
+                if (i === tenureInMonths && balance < 1 && balance > -1) { principalPayment += balance; balance = 0; }
+                scheduleHTML += `<tr><td>${i}</td><td>${formatter.format(principalPayment)}</td><td>${formatter.format(interestPayment)}</td><td>${formatter.format(balance)}</td></tr>`;
+            }
+            scheduleBody.innerHTML = scheduleHTML;
+        }
+
+        // --- Modal Control ---
+        scheduleBtn.addEventListener('click', () => {
+            loanAmountInput.value = formatCurrency(parseCurrency(loanAmountInput.value)); // Minor polish: Format amount before showing schedule
+            generateAmortizationSchedule();
+            scheduleModal.classList.add('visible');
+        });
+        closeModalBtn.addEventListener('click', () => { scheduleModal.classList.remove('visible'); });
+        scheduleModal.addEventListener('click', (e) => { if (e.target === scheduleModal) { scheduleModal.classList.remove('visible'); } });
+        
+        // --- Initial Load ---
+        updateTenureUI();
+        calculateEMI();
+    });
+  </script>
+
+</body>
+</html>
