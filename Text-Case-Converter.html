@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cosmic Gold Text Utility</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-start: #0F0C29;
+            --bg-mid: #302B63;
+            --bg-end: #24243E;
+            --surface-color: rgba(30, 30, 42, 0.7);
+            --border-color: rgba(255, 215, 0, 0.2);
+            --primary-text-color: #F0F0F0;
+            --secondary-text-color: #A0A0A0;
+            --gold-start: #FDBB2D;
+            --gold-end: #D4AF37;
+            --gold-gradient: linear-gradient(45deg, var(--gold-start), var(--gold-end));
+            --gold-glow-color: rgba(253, 187, 45, 0.3);
+            --border-radius: 12px;
+            --transition-speed: 0.3s;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: linear-gradient(-45deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--primary-text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 700px;
+            background: var(--surface-color);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.25rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.2);
+            color: var(--primary-text-color);
+            font-size: 1rem;
+            font-family: 'Lato', sans-serif;
+            outline: none;
+            transition: all var(--transition-speed);
+            resize: vertical;
+            margin-bottom: 1rem;
+        }
+        textarea:focus {
+            border-color: var(--gold-start);
+            box-shadow: 0 0 15px var(--gold-glow-color);
+        }
+
+        .stats-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.85rem;
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--secondary-text-color);
+        }
+        .stat-item span:first-child {
+            font-size: 1.1rem;
+            color: var(--primary-text-color);
+            margin-bottom: 0.25rem;
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+        .btn {
+            padding: 0.75rem 1.25rem;
+            border: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.2);
+            color: var(--primary-text-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-speed);
+        }
+        .btn:hover {
+            border-color: var(--gold-start);
+            color: var(--gold-start);
+            transform: translateY(-2px);
+        }
+        .btn-primary {
+            border-color: transparent;
+            background: var(--gold-gradient);
+            color: #111;
+        }
+        .btn-primary:hover {
+            color: #000;
+            box-shadow: 0 0 15px var(--gold-glow-color);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #28a745;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s, bottom 0.5s;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 1.5rem;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .stats-bar {
+                justify-content: center;
+            }
+            .button-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Text Utility Console</h1>
+
+        <textarea id="inputArea" placeholder="Enter or paste your text here..."></textarea>
+        
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span id="charCount">0</span>
+                Characters
+            </div>
+            <div class="stat-item">
+                <span id="wordCount">0</span>
+                Words
+            </div>
+            <div class="stat-item">
+                <span id="lineCount">0</span>
+                Lines
+            </div>
+            <div class="stat-item">
+                <span id="readingTime">0</span>
+                Min Read
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn" id="btnUpper">UPPERCASE</button>
+            <button class="btn" id="btnLower">lowercase</button>
+            <button class="btn" id="btnSentence">Sentence case</button>
+            <button class="btn" id="btnCapital">Capitalized Case</button>
+            <button class="btn btn-primary" id="btnCopy">Copy Text</button>
+            <button class="btn" id="btnClear">Clear</button>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const inputArea = document.getElementById('inputArea');
+        
+        // Stat elements
+        const charCountEl = document.getElementById('charCount');
+        const wordCountEl = document.getElementById('wordCount');
+        const lineCountEl = document.getElementById('lineCount');
+        const readingTimeEl = document.getElementById('readingTime');
+
+        // Button elements
+        const btnUpper = document.getElementById('btnUpper');
+        const btnLower = document.getElementById('btnLower');
+        const btnSentence = document.getElementById('btnSentence');
+        const btnCapital = document.getElementById('btnCapital');
+        const btnCopy = document.getElementById('btnCopy');
+        const btnClear = document.getElementById('btnClear');
+
+        // --- Live Statistics Update ---
+        inputArea.addEventListener('input', () => {
+            const text = inputArea.value;
+
+            // Character Count
+            charCountEl.textContent = text.length;
+
+            // Word Count
+            const words = text.trim().split(/\s+/).filter(word => word.length > 0);
+            const wordCount = words.length;
+            wordCountEl.textContent = text.trim() === '' ? 0 : wordCount;
+            
+            // Line Count
+            const lines = text.split('\n');
+            lineCountEl.textContent = text === '' ? 0 : lines.length;
+
+            // Reading Time
+            const readingTime = Math.ceil(wordCount / 200); // Average 200 WPM
+            readingTimeEl.textContent = readingTime;
+        });
+
+        // --- Button Functionality ---
+        btnUpper.addEventListener('click', () => {
+            inputArea.value = inputArea.value.toUpperCase();
+        });
+
+        btnLower.addEventListener('click', () => {
+            inputArea.value = inputArea.value.toLowerCase();
+        });
+        
+        // --- Professional Customization: Improved Sentence Case ---
+        btnSentence.addEventListener('click', () => {
+            let text = inputArea.value.toLowerCase();
+            // This regex finds the beginning of the string or the character after a sentence-ending punctuation, and capitalizes it.
+            text = text.replace(/(^\w{1}|\.\s*\w{1}|!\s*\w{1}|\?\s*\w{1})/gi, (char) => {
+                return char.toUpperCase();
+            });
+            inputArea.value = text;
+        });
+
+        btnCapital.addEventListener('click', () => {
+            let words = inputArea.value.toLowerCase().split(' ');
+            for (let i = 0; i < words.length; i++) {
+                if (words[i]) {
+                    words[i] = words[i][0].toUpperCase() + words[i].slice(1);
+                }
+            }
+            inputArea.value = words.join(' ');
+        });
+
+        btnClear.addEventListener('click', () => {
+            inputArea.value = '';
+            // Manually trigger input event to reset stats
+            inputArea.dispatchEvent(new Event('input'));
+        });
+
+        // --- Professional Customization: Copy to Clipboard with Toast ---
+        btnCopy.addEventListener('click', () => {
+            if (inputArea.value === '') return;
+            navigator.clipboard.writeText(inputArea.value).then(() => {
+                showToast('Copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                showToast('Failed to copy!', true);
+            });
+        });
+
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            if (isError) {
+                toast.style.backgroundColor = '#dc3545';
+            }
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.bottom = '3rem';
+            }, 10);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.bottom = '2rem';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 500);
+            }, 3000);
+        }
+    });
+    </script>
+</body>
+</html>
