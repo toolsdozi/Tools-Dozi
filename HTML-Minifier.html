@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Code Minifier Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(90deg, #FDBB2D 0%, #D4AF37 50%, #B8860B 100%);
+      --background-start: #0F0C29; --background-mid: #302B63; --background-end: #24243E;
+      --surface-color: rgba(26, 26, 42, 0.85); --text-color: #E0E0E0; --text-muted-color: #A0A0A0;
+      --border-color: rgba(255, 215, 0, 0.2); --success-color: #00C851; --error-color: #ff4444;
+      --border-radius: 16px; --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: 'Inter', sans-serif; color: var(--text-color);
+      background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
+      background-size: 400% 400%; animation: gradientBG 20s ease infinite;
+      display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    .container {
+      width: 100%; max-width: 1200px;
+      background: var(--surface-color); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color); padding: 2rem;
+    }
+    
+    h1 {
+        margin-top: 0; margin-bottom: 2rem; font-weight: 700; font-size: 2.2rem;
+        background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        text-align: center;
+    }
+
+    .language-tabs { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .language-tabs button {
+        background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); color: var(--text-muted-color);
+        padding: 0.6rem 1.5rem; border-radius: 8px; cursor: pointer;
+        font-size: 1rem; font-weight: 500; transition: all 0.3s ease;
+    }
+    .language-tabs button.active { background: #FDBB2D; color: #111; border-color: #FDBB2D; transform: translateY(-2px); }
+
+    .editor-container { display: flex; gap: 1.5rem; }
+    .panel { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+    .panel-header h2 { margin: 0; font-size: 1.2rem; color: var(--text-muted-color); }
+    .panel-header .actions { display: flex; gap: 0.5rem; }
+    .panel-header .icon-btn {
+        background: none; border: 1px solid var(--border-color); color: var(--text-muted-color);
+        width: 32px; height: 32px; border-radius: 6px; font-size: 0.9rem; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; padding: 0;
+        transition: all 0.2s ease;
+    }
+    .panel-header .icon-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-color); }
+    .panel-header .icon-btn svg { width: 16px; height: 16px; }
+    
+    .editor-wrapper {
+        position: relative; height: 450px; background: #282c34;
+        border: 2px dashed transparent; border-radius: 8px;
+        font-family: 'Roboto Mono', monospace; font-size: 1rem; overflow: hidden;
+        transition: border-color 0.3s ease;
+    }
+    .editor-wrapper.drag-over { border-color: #FDBB2D; }
+    .code-box, #input-textarea {
+        position: absolute; top: 0; left: 0;
+        width: 100%; height: 100%; padding: 1rem; margin: 0; white-space: pre; 
+        font-family: inherit; font-size: inherit; line-height: 1.5;
+    }
+    #input-textarea {
+        z-index: 2; background: transparent; border: none;
+        color: transparent; caret-color: white; outline: none; resize: none;
+        -webkit-text-fill-color: transparent; overflow: auto;
+    }
+    .code-box { z-index: 1; overflow: hidden; pointer-events: none; }
+    #output-code { white-space: pre-wrap; word-break: break-all; }
+    .output-wrapper { height: 450px; overflow: auto; background: #282c34; border-radius: 8px; border: 1px solid var(--border-color); }
+
+
+    .action-bar { text-align: center; margin-top: 2rem; }
+    .button {
+      background: var(--primary-gradient); color: #111; border: none; padding: 0.8rem 2.5rem;
+      border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer;
+      transition: all 0.3s ease; background-size: 200% auto;
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .button:hover:not(:disabled) { background-position: right center; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); }
+    .button:disabled { cursor: not-allowed; filter: grayscale(80%); }
+
+    .loader {
+        width: 18px; height: 18px; border: 2px solid #fff; border-bottom-color: transparent;
+        border-radius: 50%; display: none; animation: rotation 1s linear infinite;
+    }
+    .button.loading .loader { display: block; }
+    .button.loading .btn-text { display: none; }
+    @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .stats-bar { display: flex; gap: 1rem; font-family: 'Roboto Mono', monospace; font-size: 0.8rem; }
+    .stats-bar span { color: var(--text-muted-color); }
+    .stats-bar .savings-value { color: var(--success-color); font-weight: 500; }
+    
+    /* --- Responsive Adjustments --- */
+    @media (max-width: 900px) {
+      .editor-container { flex-direction: column; }
+      .editor-wrapper, .output-wrapper { height: 350px; }
+    }
+    @media (max-width: 500px) {
+        .container { padding: 1rem; }
+        h1 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+        .language-tabs { gap: 0.5rem; }
+        .language-tabs button { padding: 0.5rem 1rem; font-size: 0.9rem; }
+        .editor-wrapper, .output-wrapper { height: 300px; }
+        .panel-header h2 { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Smart Code Minifier Pro</h1>
+    
+    <div class="language-tabs">
+        <button class="lang-btn active" data-lang="html">HTML</button>
+        <button class="lang-btn" data-lang="css">CSS</button>
+        <button class="lang-btn" data-lang="js">JavaScript</button>
+        <button class="lang-btn" data-lang="json">JSON</button>
+    </div>
+
+    <div class="editor-container">
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Input</h2>
+                <div class="actions">
+                    <button id="pasteBtn" class="icon-btn" title="Paste from Clipboard">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.121A1.5 1.5 0 0117 6.621V16.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 16.5v-13z" /><path d="M5 6.5A1.5 1.5 0 016.5 5h3a.5.5 0 000-1h-3A2.5 2.5 0 004 6.5v10A2.5 2.5 0 006.5 19h7a2.5 2.5 0 002.5-2.5h-1A1.5 1.5 0 0113.5 18h-7A1.5 1.5 0 015 16.5v-10z" /></svg>
+                    </button>
+                    <button id="clearBtn" class="icon-btn" title="Clear Input">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-1.157.26-2.116.86-2.847 1.691a.75.75 0 001.06 1.06c.64-.64 1.44-1.121 2.387-1.3V12a.75.75 0 001.5 0V5.643c.947.179 1.747.66 2.387 1.3a.75.75 0 001.06-1.06A4.238 4.238 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 12.5a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z" clip-rule="evenodd" /><path d="M3 10a.75.75 0 01.75-.75h12.5a.75.75 0 010 1.5H3.75A.75.75 0 013 10z" /></svg>
+                    </button>
+                </div>
+            </div>
+            <div id="editor-dropzone" class="editor-wrapper">
+                <textarea id="input-textarea" spellcheck="false" placeholder="Paste your code here, or drop a file..."></textarea>
+                <pre class="code-box"><code id="input-highlight" class="language-html"></code></pre>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Output</h2>
+                <button id="copyBtn" class="icon-btn" title="Copy Output">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.121A1.5 1.5 0 0117 6.621V16.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 16.5v-13z" /><path d="M5 6.5A1.5 1.5 0 016.5 5h3a.5.5 0 000-1h-3A2.5 2.5 0 004 6.5v10A2.5 2.5 0 006.5 19h7a2.5 2.5 0 002.5-2.5h-1A1.5 1.5 0 0113.5 18h-7A1.5 1.5 0 015 16.5v-10z" /></svg>
+                  <span id="copyBtnText" style="display:none;">Copy</span>
+                </button>
+            </div>
+            <div class="output-wrapper">
+                <pre class="code-box"><code id="output-code" class="language-html"></code></pre>
+            </div>
+            <div class="stats-bar" style="margin-top: 0.75rem;">
+                <span id="original-size"></span>
+                <span id="minified-size"></span>
+                <span id="savings" class="savings-value"></span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="action-bar">
+        <button id="minifyBtn" class="button">
+            <span class="btn-text">Minify</span>
+            <div class="loader"></div>
+        </button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/terser/dist/bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/csso/dist/csso.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html-minifier-terser@7.2.0/dist/htmlminifier.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const getEl = (id) => document.getElementById(id);
+
+        const langBtns = document.querySelectorAll('.lang-btn');
+        const inputTextArea = getEl('input-textarea');
+        const inputHighlightEl = getEl('input-highlight');
+        const outputCodeEl = getEl('output-code');
+        const minifyBtn = getEl('minifyBtn');
+        const copyBtn = getEl('copyBtn');
+        const copyBtnText = getEl('copyBtnText');
+        const pasteBtn = getEl('pasteBtn');
+        const clearBtn = getEl('clearBtn');
+        const dropzone = getEl('editor-dropzone');
+        
+        const originalSizeEl = getEl('original-size');
+        const minifiedSizeEl = getEl('minified-size');
+        const savingsEl = getEl('savings');
+
+        let activeLanguage = 'html';
+
+        const debounce = (func, delay) => {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        };
+
+        const syncAndHighlight = () => {
+            const code = inputTextArea.value;
+            inputHighlightEl.textContent = code;
+            try {
+                hljs.highlightElement(inputHighlightEl);
+            } catch(e) { console.error("Highlight.js error:", e); }
+        };
+        
+        const debouncedHighlight = debounce(syncAndHighlight, 150);
+
+        const detectLanguageAndSwitch = (code) => {
+            const trimmedCode = code.trim();
+            if (!trimmedCode) return;
+
+            if (trimmedCode.startsWith('{') && trimmedCode.endsWith('}') || trimmedCode.startsWith('[') && trimmedCode.endsWith(']')) {
+                try {
+                    JSON.parse(trimmedCode);
+                    switchLanguage('json');
+                    return;
+                } catch (e) { /* Not JSON, continue */ }
+            }
+            if (/^\s*<(!DOCTYPE|html|body|div|p|h[1-6])/.test(trimmedCode)) {
+                switchLanguage('html');
+            } else if (/\s*([#\.\w\-\*]+)\s*\{[^\}]+\}/.test(trimmedCode)) {
+                switchLanguage('css');
+            } else {
+                switchLanguage('js');
+            }
+        };
+        
+        const debouncedDetect = debounce(detectLanguageAndSwitch, 400);
+
+        inputTextArea.addEventListener('input', () => {
+            debouncedHighlight();
+            debouncedDetect(inputTextArea.value);
+        });
+
+        inputTextArea.addEventListener('scroll', () => {
+            inputHighlightEl.parentElement.scrollTop = inputTextArea.scrollTop;
+            inputHighlightEl.parentElement.scrollLeft = inputTextArea.scrollLeft;
+        });
+
+        function switchLanguage(lang) {
+            activeLanguage = lang;
+            langBtns.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+            inputHighlightEl.className = `language-${lang} hljs`;
+            outputCodeEl.className = `language-${lang} hljs`;
+            syncAndHighlight();
+            try {
+                hljs.highlightElement(outputCodeEl);
+            } catch(e) { console.error("Highlight.js error:", e); }
+        }
+
+        langBtns.forEach(btn => {
+            btn.addEventListener('click', () => switchLanguage(btn.dataset.lang));
+        });
+
+        pasteBtn.addEventListener('click', async () => {
+            try {
+                const text = await navigator.clipboard.readText();
+                inputTextArea.value = text;
+                inputTextArea.dispatchEvent(new Event('input', { bubbles: true }));
+            } catch (err) {
+                console.error('Failed to read clipboard: ', err);
+                alert('Failed to paste. Please use Ctrl+V.');
+            }
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            inputTextArea.value = '';
+            outputCodeEl.textContent = '';
+            originalSizeEl.textContent = '';
+            minifiedSizeEl.textContent = '';
+            savingsEl.textContent = '';
+            inputTextArea.dispatchEvent(new Event('input', { bubbles: true }));
+            inputTextArea.focus();
+        });
+
+        copyBtn.addEventListener('click', () => {
+            const code = outputCodeEl.textContent;
+            if (code) {
+                navigator.clipboard.writeText(code).then(() => {
+                    const originalIcon = copyBtn.innerHTML;
+                    copyBtn.innerHTML = `✓`;
+                    copyBtn.title = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalIcon;
+                        copyBtn.title = 'Copy Output';
+                    }, 2000);
+                });
+            }
+        });
+
+        minifyBtn.addEventListener('click', async () => {
+            const code = inputTextArea.value;
+            if (!code.trim()) return;
+
+            minifyBtn.classList.add('loading');
+            minifyBtn.disabled = true;
+            outputCodeEl.textContent = '';
+            
+            try {
+                let minifiedCode = '';
+                switch (activeLanguage) {
+                    case 'html':
+                        // FIX: Corrected variable name from htmlMinifier to HtmlMinifier (PascalCase)
+                        minifiedCode = await HtmlMinifier.minify(code, {
+                            collapseWhitespace: true, removeComments: true,
+                            minifyCSS: true, minifyJS: true, removeRedundantAttributes: true,
+                        });
+                        break;
+                    case 'css':
+                        minifiedCode = csso.minify(code).css;
+                        break;
+                    case 'js':
+                        const result = await Terser.minify(code, { sourceMap: false });
+                        if (result.error) throw result.error;
+                        minifiedCode = result.code;
+                        break;
+                    case 'json':
+                        minifiedCode = JSON.stringify(JSON.parse(code));
+                        break;
+                }
+                outputCodeEl.textContent = minifiedCode;
+                updateStats(code, minifiedCode);
+            } catch (err) {
+                outputCodeEl.style.color = 'var(--error-color)';
+                outputCodeEl.textContent = `Error: ${err.message}`;
+                console.error(err);
+            } finally {
+                if(outputCodeEl.style.color) setTimeout(() => { outputCodeEl.style.color = ''; }, 3000);
+                try {
+                    hljs.highlightElement(outputCodeEl);
+                } catch(e) { console.error("Highlight.js error:", e); }
+                minifyBtn.classList.remove('loading');
+                minifyBtn.disabled = false;
+            }
+        });
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function updateStats(original, minified) {
+            const originalBytes = new Blob([original]).size;
+            const minifiedBytes = new Blob([minified]).size;
+            
+            originalSizeEl.textContent = `In: ${formatBytes(originalBytes)}`;
+            minifiedSizeEl.textContent = `Out: ${formatBytes(minifiedBytes)}`;
+            
+            if (originalBytes > 0 && minifiedBytes > 0) {
+                const savingPercent = ((originalBytes - minifiedBytes) / originalBytes * 100).toFixed(1);
+                savingsEl.textContent = `Saved: ${savingPercent}%`;
+            } else {
+                savingsEl.textContent = '';
+            }
+        }
+        
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('drag-over');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('drag-over');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (readEvent) => {
+                    const content = readEvent.target.result;
+                    inputTextArea.value = content;
+                    const extension = file.name.split('.').pop().toLowerCase();
+                    if (['html', 'css', 'js', 'json'].includes(extension)) {
+                        switchLanguage(extension);
+                    } else {
+                        detectLanguageAndSwitch(content);
+                    }
+                    syncAndHighlight();
+                };
+                reader.readAsText(file);
+            }
+        });
+    });
+  </script>
+
+</body>
+</html>
