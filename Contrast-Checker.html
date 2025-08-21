@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Contrast Checker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --border-radius: 12px;
+      --transition-speed: 0.3s;
+      --font-main: 'Inter', sans-serif;
+      --font-mono: 'Roboto Mono', monospace;
+    }
+    :root[data-theme='dark'] {
+      --bg-start: #0F0C29; --bg-mid: #302B63; --bg-end: #24243E;
+      --surface-color: rgba(30, 30, 42, 0.85);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --primary-text-color: #F0F0F0;
+      --secondary-text-color: #A0A0A0;
+      --accent-color: #FDFC47;
+      --accent-glow-color: rgba(253, 252, 71, 0.2);
+      --shadow-color: rgba(0,0,0,0.5);
+      --input-bg-color: rgba(0,0,0,0.3);
+      --pass-color: #4CAF50;
+      --fail-color: #F44336;
+    }
+    :root[data-theme='light'] {
+      --bg-start: #FDFBFB; --bg-mid: #EBEDEE; --bg-end: #FDFBFB;
+      --surface-color: rgba(255, 255, 255, 0.9);
+      --border-color: rgba(0, 0, 0, 0.1);
+      --primary-text-color: #111;
+      --secondary-text-color: #666;
+      --accent-color: #24243E;
+      --accent-glow-color: rgba(36, 36, 62, 0.2);
+      --shadow-color: rgba(0,0,0,0.1);
+      --input-bg-color: rgba(0,0,0,0.03);
+      --pass-color: #4CAF50;
+      --fail-color: #D32F2F;
+    }
+    
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: var(--font-main);
+      background: linear-gradient(-45deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+      background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+      color: var(--primary-text-color); display: flex; justify-content: center;
+      align-items: center; min-height: 100vh; padding: 1.5rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    .container {
+      width: 100%; max-width: 700px;
+      background: var(--surface-color); backdrop-filter: blur(25px);
+      border: 1px solid var(--border-color); border-radius: 20px;
+      padding: 2rem; box-shadow: 0 20px 60px var(--shadow-color);
+    }
+    
+    .preview-section {
+      padding: 2rem; border-radius: var(--border-radius);
+      margin-bottom: 2rem; transition: all var(--transition-speed);
+      border: 1px solid var(--border-color); text-align: left;
+    }
+    .preview-section h3 { margin: 0; font-size: 2rem; }
+    .preview-section p { margin: 0.5rem 0 0; font-size: 1rem; }
+
+    .controls-grid { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 1rem; align-items: center; margin-bottom: 2rem; }
+    .color-control { background: var(--input-bg-color); padding: 1rem; border-radius: var(--border-radius); }
+    .color-control h4 { margin-top: 0; margin-bottom: 1rem; color: var(--secondary-text-color); }
+    .color-input-group { display: flex; align-items: center; gap: 1rem; }
+    input[type="color"] { width: 50px; height: 50px; border: none; padding: 0; background: none; border-radius: 8px; overflow: hidden; cursor: pointer; }
+    input[type="text"] {
+      width: 100%; background: none; border: none;
+      color: var(--primary-text-color); outline: none;
+      font-family: var(--font-mono); font-size: 1.1rem;
+      border-bottom: 2px solid transparent; transition: border-color 0.3s;
+    }
+    input[type="text"].invalid { border-bottom-color: var(--fail-color); }
+
+    .results-section { background: var(--input-bg-color); padding: 1.5rem; border-radius: var(--border-radius); text-align: left; }
+    .ratio-display { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .ratio-display h4 { color: var(--secondary-text-color); }
+    .ratio-display span { font-size: 2.2rem; font-weight: 700; transition: color 0.3s; }
+    .wcag-list { list-style: none; padding: 0; }
+    .wcag-list li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-top: 1px solid var(--border-color); }
+    .wcag-list .status { font-weight: bold; }
+    .pass { color: var(--pass-color); }
+    .fail { color: var(--fail-color); }
+    
+    .button {
+        background: none; border: 1px solid var(--border-color); color: var(--secondary-text-color);
+        width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .button:hover { border-color: var(--accent-color); color: var(--accent-color); }
+    
+    .adjuster-section { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; }
+    .adjuster-section.visible { max-height: 200px; margin-top: 1.5rem; }
+    .adjuster { margin-bottom: 1rem; }
+    .adjuster label { display: block; margin-bottom: 0.5rem; }
+    .adjuster input[type="range"] { width: 100%; }
+
+    @media (max-width: 600px) {
+      .controls-grid { grid-template-columns: 1fr; }
+      #swap-btn { transform: rotate(90deg); margin: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="preview-section" id="preview-section">
+      <h3 id="preview-heading">Heading Text</h3>
+      <p id="preview-paragraph">Paragraph text for testing contrast.</p>
+    </div>
+
+    <div class="controls-grid">
+      <div class="color-control">
+        <h4>Text Color</h4>
+        <div class="color-input-group">
+          <input type="color" id="text-color-picker" value="#F0F0F0">
+          <input type="text" id="text-hex-input" value="#F0F0F0">
+        </div>
+      </div>
+      <button id="swap-btn" class="button" title="Swap Colors">↔</button>
+      <div class="color-control">
+        <h4>Background Color</h4>
+        <div class="color-input-group">
+          <input type="color" id="bg-color-picker" value="#24243E">
+          <input type="text" id="bg-hex-input" value="#24243E">
+        </div>
+      </div>
+    </div>
+
+    <div class="results-section">
+      <div class="ratio-display">
+        <h4>Contrast Ratio</h4>
+        <span id="contrast-ratio"></span>
+      </div>
+      <ul class="wcag-list" id="wcag-list"></ul>
+    </div>
+    
+    <div class="adjuster-section" id="adjuster-section">
+      <div class="adjuster" id="text-adjuster">
+        <label for="text-lightness-slider">Adjust Text Lightness</label>
+        <input type="range" id="text-lightness-slider" min="0" max="100">
+      </div>
+      <div class="adjuster" id="bg-adjuster">
+        <label for="bg-lightness-slider">Adjust Background Lightness</label>
+        <input type="range" id="bg-lightness-slider" min="0" max="100">
+      </div>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // A robust color conversion and manipulation library
+    class Color {
+        constructor(val) {
+            if (typeof val === 'string') this.rgb = this._hexToRgb(val);
+            else this.rgb = { r: val.r, g: val.g, b: val.b };
+        }
+        _hexToRgb(hex) {
+            if (!/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) return { r: 0, g: 0, b: 0 };
+            let c = hex.substring(1).split('');
+            if (c.length === 3) c = [c[0], c[0], c[1], c[1], c[2], c[2]];
+            c = '0x' + c.join('');
+            return { r: (c >> 16) & 255, g: (c >> 8) & 255, b: c & 255 };
+        }
+        toHex() { return '#' + [this.rgb.r, this.rgb.g, this.rgb.b].map(x => Math.round(x).toString(16).padStart(2, '0')).join(''); }
+        toHsl() {
+            let {r, g, b} = this.rgb;
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            let h = 0, s = 0, l = (max + min) / 2;
+            if (max !== min) {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch(max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+            return { h: h * 360, s: s * 100, l: l * 100 };
+        }
+        static fromHsl(h, s, l) {
+            s /= 100; l /= 100;
+            const k = n => (n + h / 30) % 12;
+            const a = s * Math.min(l, 1 - l);
+            const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+            return new Color({ r: 255 * f(0), g: 255 * f(8), b: 255 * f(4) });
+        }
+        getLuminance() {
+            const {r, g, b} = this.rgb;
+            const a = [r, g, b].map(v => {
+                v /= 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+        }
+        static getRatio(color1, color2) {
+            const lum1 = color1.getLuminance();
+            const lum2 = color2.getLuminance();
+            const brightest = Math.max(lum1, lum2);
+            const darkest = Math.min(lum1, lum2);
+            return ((brightest + 0.05) / (darkest + 0.05));
+        }
+    }
+
+    const elements = {
+        previewSection: document.getElementById('preview-section'),
+        textColorPicker: document.getElementById('text-color-picker'),
+        textHexInput: document.getElementById('text-hex-input'),
+        bgColorPicker: document.getElementById('bg-color-picker'),
+        bgHexInput: document.getElementById('bg-hex-input'),
+        swapBtn: document.getElementById('swap-btn'),
+        contrastRatio: document.getElementById('contrast-ratio'),
+        wcagList: document.getElementById('wcag-list'),
+        adjusterSection: document.getElementById('adjuster-section'),
+        textAdjusterSlider: document.getElementById('text-lightness-slider'),
+        bgAdjusterSlider: document.getElementById('bg-lightness-slider'),
+    };
+
+    let textColor = new Color('#F0F0F0');
+    let bgColor = new Color('#24243E');
+
+    const updateUI = () => {
+        // Update color inputs
+        elements.textColorPicker.value = textColor.toHex();
+        elements.textHexInput.value = textColor.toHex().toUpperCase();
+        elements.bgColorPicker.value = bgColor.toHex();
+        elements.bgHexInput.value = bgColor.toHex().toUpperCase();
+
+        // Update preview
+        elements.previewSection.style.backgroundColor = bgColor.toHex();
+        elements.previewSection.style.color = textColor.toHex();
+
+        // Calculate and display results
+        const ratio = Color.getRatio(textColor, bgColor);
+        elements.contrastRatio.textContent = ratio.toFixed(2);
+        elements.contrastRatio.className = ratio >= 4.5 ? 'pass' : 'fail';
+        
+        const results = [
+            { label: 'AA Normal Text', pass: ratio >= 4.5 },
+            { label: 'AA Large Text', pass: ratio >= 3 },
+            { label: 'AAA Normal Text', pass: ratio >= 7 },
+            { label: 'AAA Large Text', pass: ratio >= 4.5 },
+        ];
+        elements.wcagList.innerHTML = results.map(r => `<li><span>${r.label}</span><span class="status ${r.pass ? 'pass' : 'fail'}">${r.pass ? 'Pass ✓' : 'Fail ✗'}</span></li>`).join('');
+
+        // Show or hide adjuster
+        const allPass = results.every(r => r.pass);
+        elements.adjusterSection.classList.toggle('visible', !allPass);
+        if(!allPass) updateAdjusters();
+    };
+    
+    // --- Smart Adjuster Logic ---
+    const updateAdjusters = () => {
+        const textHsl = textColor.toHsl();
+        const bgHsl = bgColor.toHsl();
+        elements.textAdjusterSlider.value = textHsl.l;
+        elements.bgAdjusterSlider.value = bgHsl.l;
+    };
+    
+    elements.textAdjusterSlider.addEventListener('input', e => {
+        const textHsl = textColor.toHsl();
+        textHsl.l = +e.target.value;
+        textColor = Color.fromHsl(textHsl.h, textHsl.s, textHsl.l);
+        updateUI();
+    });
+    
+    elements.bgAdjusterSlider.addEventListener('input', e => {
+        const bgHsl = bgColor.toHsl();
+        bgHsl.l = +e.target.value;
+        bgColor = Color.fromHsl(bgHsl.h, bgHsl.s, bgHsl.l);
+        updateUI();
+    });
+
+    // --- Event Listeners ---
+    const handleInput = (target, type) => {
+        const newColor = new Color(target.value);
+        if(newColor.rgb) {
+            if(type === 'text') textColor = newColor;
+            else bgColor = newColor;
+            target.classList.remove('invalid');
+            updateUI();
+        } else {
+            target.classList.add('invalid');
+        }
+    };
+
+    elements.textColorPicker.addEventListener('input', e => handleInput(e.target, 'text'));
+    elements.textHexInput.addEventListener('input', e => handleInput(e.target, 'text'));
+    elements.bgColorPicker.addEventListener('input', e => handleInput(e.target, 'bg'));
+    elements.bgHexInput.addEventListener('input', e => handleInput(e.target, 'bg'));
+    
+    elements.swapBtn.addEventListener('click', () => {
+        [textColor, bgColor] = [bgColor, textColor];
+        updateUI();
+    });
+
+    updateUI(); // Initial check
+});
+</script>
+
+</body>
+</html>
