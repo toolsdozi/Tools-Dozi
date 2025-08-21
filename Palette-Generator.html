@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Palette Generator</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f4f7f6;
+      margin: 0;
+      padding: 30px;
+      text-align: center;
+      color: #333;
+    }
+
+    h2 {
+      color: #007bff;
+      margin-bottom: 20px;
+    }
+
+    .palette-box {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin: 30px auto;
+      max-width: 800px;
+    }
+
+    .color-block {
+      flex: 1 1 120px;
+      height: 120px;
+      border-radius: 12px;
+      font-weight: bold;
+      display: flex;
+      flex-direction: column; /* NEW: To stack text and lock icon */
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+      position: relative; /* NEW: For positioning the lock icon */
+      overflow: hidden; /* NEW: To contain the icon */
+    }
+    
+    .color-block:hover, .color-block:focus-within {
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+    
+    .color-hex {
+      font-size: 16px;
+      padding: 5px;
+      border-radius: 5px;
+      background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    /* NEW: Lock button styling */
+    .lock-btn {
+      position: absolute;
+      bottom: 10px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+    }
+    .lock-btn:hover {
+      opacity: 1;
+    }
+    .color-block.locked .lock-btn {
+      opacity: 1; /* Make locked icon fully visible */
+    }
+
+    button#generateBtn {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    button#generateBtn:hover {
+      background-color: #0056b3;
+      transform: scale(1.05);
+    }
+
+    .note {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Palette Generator</h2>
+  <div class="palette-box" id="paletteBox"></div>
+  <button id="generateBtn">Generate Palette</button>
+  <div class="note">Click a color code to copy. Click 🔒 to lock/unlock.</div>
+
+  <script>
+    const paletteBox = document.getElementById("paletteBox");
+    const generateBtn = document.getElementById("generateBtn");
+
+    function getRandomColor() {
+      const letters = '0123456789ABCDEF';
+      let color = '#';
+      for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+    }
+
+    function getContrastColor(hexcolor) {
+      if (hexcolor.startsWith('#')) hexcolor = hexcolor.slice(1);
+      const r = parseInt(hexcolor.substr(0, 2), 16);
+      const g = parseInt(hexcolor.substr(2, 2), 16);
+      const b = parseInt(hexcolor.substr(4, 2), 16);
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.5 ? '#000000' : '#FFFFFF';
+    }
+
+    // IMPROVEMENT: Generate palette now respects locked colors
+    function generatePalette() {
+      const existingBlocks = paletteBox.querySelectorAll('.color-block');
+
+      if (existingBlocks.length === 0) {
+        // First time load: Create 5 new blocks
+        for (let i = 0; i < 5; i++) {
+          createColorBlock();
+        }
+      } else {
+        // Subsequent loads: Update only unlocked blocks
+        existingBlocks.forEach(block => {
+          if (!block.classList.contains('locked')) {
+            const newColor = getRandomColor();
+            const hexDisplay = block.querySelector('.color-hex');
+            
+            block.style.backgroundColor = newColor;
+            block.style.color = getContrastColor(newColor);
+            hexDisplay.textContent = newColor;
+            // Store the new color in the element's dataset for the copy function
+            hexDisplay.dataset.color = newColor;
+          }
+        });
+      }
+    }
+    
+    // NEW: Function to create a single color block
+    function createColorBlock() {
+        const color = getRandomColor();
+        const block = document.createElement("div");
+        block.className = "color-block";
+        block.style.backgroundColor = color;
+        block.style.color = getContrastColor(color);
+
+        const hexDisplay = document.createElement("span");
+        hexDisplay.className = "color-hex";
+        hexDisplay.textContent = color;
+        hexDisplay.dataset.color = color; // Store color in dataset
+        
+        const lockButton = document.createElement("button");
+        lockButton.className = "lock-btn";
+        lockButton.innerHTML = '🔓'; // Unlocked by default
+
+        // Event listener for copying the color
+        hexDisplay.addEventListener('click', () => handleColorCopy(hexDisplay));
+
+        // NEW: Event listener for the lock button
+        lockButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevents the copy event from firing
+            block.classList.toggle('locked');
+            lockButton.innerHTML = block.classList.contains('locked') ? '🔒' : '🔓';
+        });
+
+        block.appendChild(hexDisplay);
+        block.appendChild(lockButton);
+        paletteBox.appendChild(block);
+    }
+
+    // FIX: The copy handler is now more robust
+    function handleColorCopy(hexElement) {
+      const colorToCopy = hexElement.dataset.color; // Get color from dataset
+      
+      // Prevent running if already in "Copied!" state
+      if (hexElement.textContent === "Copied!") return;
+      
+      navigator.clipboard.writeText(colorToCopy).then(() => {
+        hexElement.textContent = "Copied!";
+        // Revert back to the original color code after 1.5 seconds
+        setTimeout(() => {
+          hexElement.textContent = colorToCopy;
+        }, 1500);
+      }).catch(err => {
+        console.error('Failed to copy text: ', err);
+      });
+    }
+
+    generateBtn.addEventListener('click', generatePalette);
+
+    // Generate initial palette on page load
+    generatePalette();
+  </script>
+
+</body>
+</html>
