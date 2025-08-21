@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Color Blindness Simulator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #007bff;
+      --light-primary: #e6f2ff;
+      --background-color: #f7f9fc;
+      --text-color: #333;
+      --border-color: #dee2e6;
+      --card-bg: #ffffff;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--background-color);
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      color: var(--text-color);
+    }
+
+    .header {
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      color: var(--primary-color);
+      font-size: 2.2em;
+      margin: 0;
+    }
+    .header p {
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+    
+    .controls-panel {
+      padding: 20px;
+      background-color: var(--light-primary);
+      border-radius: 10px;
+      margin-bottom: 30px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .file-upload-btn {
+      background-color: var(--primary-color);
+      color: white;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      font-weight: 600;
+    }
+    .file-upload-btn:hover {
+      background-color: #0056b3;
+      transform: translateY(-2px);
+    }
+    input[type="file"] {
+      display: none;
+    }
+
+    select {
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: #fff;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* NEW: Side-by-side comparison layout */
+    .comparison-container {
+      display: none; /* Hidden by default */
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+      text-align: left;
+    }
+    .image-box {
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 15px;
+        background: #fafafa;
+    }
+    .image-box h3 {
+        margin-top: 0;
+        text-align: center;
+        font-weight: 600;
+    }
+    .image-box img {
+      width: 100%;
+      border-radius: 8px;
+      object-fit: cover;
+      aspect-ratio: 16 / 10;
+      background-color: #eee;
+    }
+
+    /* NEW: Loading Spinner */
+    .loader {
+      display: none;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid var(--primary-color);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    #placeholder {
+        color: #888;
+        padding: 40px 20px;
+        border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2>Advanced Color Blindness Simulator</h2>
+    <p>See how your images appear to people with different types of color vision deficiency.</p>
+  </div>
+
+  <div class="main-container">
+    <div class="controls-panel">
+      <label for="imageUpload" class="file-upload-btn">Upload Image</label>
+      <input type="file" id="imageUpload" accept="image/*">
+      
+      <div>
+        <label for="colorBlindnessType">Simulation Type: </label>
+        <select id="colorBlindnessType" disabled>
+          <option value="normal">Normal Vision</option>
+          <option value="deuteranopia">Deuteranopia</option>
+          <option value="protanopia">Protanopia</option>
+          <option value="tritanopia">Tritanopia</option>
+          <option value="achromatopsia">Achromatopsia (Monochrome)</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="loader" class="loader"></div>
+    <div id="placeholder"><p>Upload an image to start the simulation.</p></div>
+
+    <div id="comparisonContainer" class="comparison-container">
+      <div class="image-box">
+        <h3>Original</h3>
+        <img id="originalImage" src="" alt="Original user-uploaded image">
+      </div>
+      <div class="image-box">
+        <h3>Simulated</h3>
+        <img id="filteredImage" src="" alt="Image with color blindness simulation">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const imageUpload = document.getElementById('imageUpload');
+    const colorBlindnessType = document.getElementById('colorBlindnessType');
+    const originalImage = document.getElementById('originalImage');
+    const filteredImage = document.getElementById('filteredImage');
+    const comparisonContainer = document.getElementById('comparisonContainer');
+    const placeholder = document.getElementById('placeholder');
+    const loader = document.getElementById('loader');
+
+    const filters = {
+        normal: 'none',
+        protanopia: 'url(#protanopia)',
+        deuteranopia: 'url(#deuteranopia)',
+        tritanopia: 'url(#tritanopia)',
+        achromatopsia: 'grayscale(100%)'
+    };
+
+    function applyFilter() {
+      const selectedType = colorBlindnessType.value;
+      filteredImage.style.filter = filters[selectedType] || 'none';
+    }
+
+    imageUpload.addEventListener('change', function(e) {
+      if (e.target.files && e.target.files[0]) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+
+        // Show loader and hide previous content
+        loader.style.display = 'block';
+        placeholder.style.display = 'none';
+        comparisonContainer.style.display = 'none';
+        colorBlindnessType.disabled = true;
+
+        reader.onload = function(event) {
+          const imageUrl = event.target.result;
+          originalImage.src = imageUrl;
+          filteredImage.src = imageUrl;
+          
+          // Hide loader and show images
+          loader.style.display = 'none';
+          comparisonContainer.style.display = 'grid'; // Use grid for the layout
+          
+          // Reset and enable controls
+          colorBlindnessType.disabled = false;
+          colorBlindnessType.value = 'normal';
+          applyFilter();
+        };
+
+        reader.readAsDataURL(file);
+      }
+    });
+
+    colorBlindnessType.addEventListener('change', applyFilter);
+  </script>
+  
+  <svg style="display: none">
+    <filter id="protanopia">
+      <feColorMatrix type="matrix" values="0.567,0.433,0,0,0 0.558,0.442,0,0,0 0,0.242,0.758,0,0 0,0,0,1,0"/>
+    </filter>
+    <filter id="deuteranopia">
+      <feColorMatrix type="matrix" values="0.625,0.375,0,0,0 0.7,0.3,0,0,0 0,0.3,0.7,0,0 0,0,0,1,0"/>
+    </filter>
+    <filter id="tritanopia">
+      <feColorMatrix type="matrix" values="0.95,0.05,0,0,0 0,0.433,0.567,0,0 0,0.475,0.525,0,0 0,0,0,1,0"/>
+    </filter>
+  </svg>
+
+</body>
+</html>
