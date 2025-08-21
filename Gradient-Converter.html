@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Gradient Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --border-radius: 12px;
+      --transition-speed: 0.3s;
+      --font-main: 'Inter', sans-serif;
+      --font-mono: 'Roboto Mono', monospace;
+    }
+    :root[data-theme='dark'] {
+      --bg-start: #0F0C29; --bg-mid: #302B63; --bg-end: #24243E;
+      --surface-color: rgba(30, 30, 42, 0.85);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --primary-text-color: #F0F0F0;
+      --secondary-text-color: #A0A0A0;
+      --accent-start: #DA4453; --accent-end: #89216B;
+      --accent-gradient: linear-gradient(45deg, var(--accent-start), var(--accent-end));
+      --accent-glow-color: rgba(218, 68, 83, 0.2);
+      --shadow-color: rgba(0,0,0,0.5);
+      --input-bg-color: rgba(0,0,0,0.3);
+    }
+    :root[data-theme='light'] {
+      --bg-start: #FDFBFB; --bg-mid: #EBEDEE; --bg-end: #FDFBFB;
+      --surface-color: rgba(255, 255, 255, 0.9);
+      --border-color: rgba(0, 0, 0, 0.1);
+      --primary-text-color: #111;
+      --secondary-text-color: #666;
+      --accent-start: #DA4453; --accent-end: #89216B;
+      --accent-gradient: linear-gradient(45deg, var(--accent-start), var(--accent-end));
+      --accent-glow-color: rgba(218, 68, 83, 0.3);
+      --shadow-color: rgba(0,0,0,0.1);
+      --input-bg-color: rgba(0,0,0,0.03);
+    }
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: var(--font-main);
+      background: linear-gradient(-45deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+      background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+      color: var(--primary-text-color); display: flex; justify-content: center;
+      align-items: center; min-height: 100vh; padding: 1.5rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    .container {
+      width: 100%; max-width: 800px;
+      background: var(--surface-color); backdrop-filter: blur(25px);
+      border: 1px solid var(--border-color); border-radius: 20px;
+      padding: 2rem; box-shadow: 0 20px 60px var(--shadow-color);
+    }
+    
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+    h1 { font-size: 1.8rem; }
+    
+    .preview { height: 250px; border-radius: var(--border-radius); border: 2px solid var(--border-color); margin-bottom: 2rem; transition: background var(--transition-speed); }
+    
+    .controls { display: grid; gap: 1.5rem; }
+    .control-section { background: var(--input-bg-color); padding: 1rem; border-radius: var(--border-radius); }
+    .control-section h3 { margin-top: 0; margin-bottom: 1rem; font-size: 1rem; color: var(--secondary-text-color); }
+
+    .colors-list { display: flex; flex-direction: column; gap: 1rem; }
+    .color-stop { display: flex; align-items: center; gap: 1rem; }
+    .color-stop-picker { display: flex; align-items: center; gap: 0.5rem; }
+    input[type="color"] { width: 40px; height: 40px; border: none; padding: 0; background: none; border-radius: 6px; overflow: hidden; cursor: pointer; }
+    input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
+    .remove-color-btn { background: none; border: none; color: var(--secondary-text-color); cursor: pointer; padding: 0.5rem; display: flex; align-items: center; }
+    .remove-color-btn:hover { color: var(--primary-text-color); }
+
+    .color-stop-position { flex: 1; display: flex; align-items: center; gap: 1rem; }
+    .color-stop-position input[type="range"] { flex: 1; }
+    .color-stop-position span { font-family: var(--font-mono); width: 40px; text-align: right; }
+
+    .angle-control, .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
+    .angle-control-group { display: flex; align-items: center; gap: 1rem; }
+    .angle-control-group input[type=range] { flex: 1; }
+    .angle-control-group span { font-family: var(--font-mono); width: 40px; }
+    
+    .angle-section-wrapper { transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out; max-height: 0; opacity: 0; overflow: hidden; }
+    .angle-section-wrapper.visible { max-height: 100px; opacity: 1; }
+
+    .code-output { position: relative; }
+    #css-code {
+        width: 100%; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;
+        font-family: var(--font-mono); color: var(--primary-text-color); white-space: pre-wrap;
+        word-break: break-all; min-height: 80px; padding-right: 80px;
+    }
+    .copy-btn { position: absolute; top: 0.5rem; right: 0.5rem; }
+    
+    .button {
+        background: var(--accent-gradient); color: white; border: none; padding: 0.6rem 1.2rem;
+        border-radius: 8px; font-weight: 500; cursor: pointer; transition: transform 0.2s;
+        display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .button:hover { transform: translateY(-2px); }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header"><h1>Gradient Generator</h1></div>
+    <div class="preview" id="preview"></div>
+
+    <div class="controls">
+      <div class="control-section">
+        <h3>Colors</h3>
+        <div id="colors-list" class="colors-list"></div>
+        <button id="add-color-btn" class="button" style="margin-top: 1rem;">Add Color</button>
+      </div>
+
+      <div class="options-grid">
+        <div class="control-section">
+            <h3>Type</h3>
+            <div id="type-selector">
+                <input type="radio" id="type-linear" name="gradient-type" value="linear" checked><label for="type-linear">Linear</label>
+                <input type="radio" id="type-radial" name="gradient-type" value="radial" style="margin-left: 1rem;"><label for="type-radial">Radial</label>
+            </div>
+        </div>
+        <div class="control-section angle-section-wrapper" id="angle-section-wrapper">
+             <div id="angle-section">
+                <h3>Angle</h3>
+                <div class="angle-control-group">
+                    <input type="range" id="angle-slider" min="0" max="360" value="90">
+                    <span id="angle-value">90°</span>
+                </div>
+            </div>
+        </div>
+      </div>
+      
+       <div class="control-section code-output">
+        <h3>CSS Code</h3>
+        <pre id="css-code"></pre>
+        <button id="copy-css-btn" class="button copy-btn">
+            <svg class="copy-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"/><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zM-1 1.5A1.5 1.5 0 0 1 .5 0h3A1.5 1.5 0 0 1 5 1.5v1A1.5 1.5 0 0 1 3.5 4h-3A1.5 1.5 0 0 1-1 2.5v-1z"/></svg>
+            <span class="copy-text">Copy</span>
+        </button>
+      </div>
+
+       <div class="control-section" style="text-align:center;">
+           <button id="random-btn" class="button">Randomize</button>
+       </div>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const preview = document.getElementById('preview');
+    const colorsList = document.getElementById('colors-list');
+    const addColorBtn = document.getElementById('add-color-btn');
+    const typeSelector = document.getElementById('type-selector');
+    const angleSlider = document.getElementById('angle-slider');
+    const angleValue = document.getElementById('angle-value');
+    const angleSectionWrapper = document.getElementById('angle-section-wrapper');
+    const cssCode = document.getElementById('css-code');
+    const copyCssBtn = document.getElementById('copy-css-btn');
+    const randomBtn = document.getElementById('random-btn');
+
+    let state = {
+        colors: [
+            { color: '#DA4453', position: 0 },
+            { color: '#89216B', position: 100 }
+        ],
+        type: 'linear',
+        angle: 90,
+    };
+
+    const updateGradient = () => {
+        const colorStops = state.colors
+            .sort((a, b) => a.position - b.position)
+            .map(c => `${c.color} ${c.position}%`)
+            .join(', ');
+        
+        let gradientValue;
+
+        if (state.type === 'linear') {
+            gradientValue = `linear-gradient(${state.angle}deg, ${colorStops})`;
+        } else {
+            gradientValue = `radial-gradient(circle, ${colorStops})`;
+        }
+
+        preview.style.background = gradientValue;
+        cssCode.textContent = `background: ${gradientValue};`;
+    };
+
+    const renderColorStops = () => {
+        colorsList.innerHTML = '';
+        state.colors.forEach((colorStop, index) => {
+            const el = document.createElement('div');
+            el.className = 'color-stop';
+
+            el.innerHTML = `
+                <div class="color-stop-picker">
+                    <input type="color" value="${colorStop.color}" data-index="${index}">
+                    <button class="remove-color-btn" data-index="${index}" title="Remove color" style="${state.colors.length <= 2 ? 'display: none;' : ''}">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+                    </button>
+                </div>
+                <div class="color-stop-position">
+                    <input type="range" min="0" max="100" value="${colorStop.position}" data-index="${index}">
+                    <span>${colorStop.position}%</span>
+                </div>
+            `;
+            colorsList.appendChild(el);
+        });
+
+        // Add event listeners after elements are in the DOM
+        colorsList.querySelectorAll('input[type="color"]').forEach(input => {
+            input.addEventListener('input', (e) => {
+                state.colors[e.target.dataset.index].color = e.target.value;
+                updateGradient();
+            });
+        });
+        colorsList.querySelectorAll('input[type="range"]').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const index = e.target.dataset.index;
+                state.colors[index].position = e.target.value;
+                e.target.nextElementSibling.textContent = `${e.target.value}%`;
+                updateGradient();
+            });
+        });
+        colorsList.querySelectorAll('.remove-color-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                state.colors.splice(e.currentTarget.dataset.index, 1);
+                renderColorStops();
+                updateGradient();
+            });
+        });
+    };
+    
+    addColorBtn.addEventListener('click', () => {
+        if (state.colors.length < 5) {
+            state.colors.push({ color: getRandomHexColor(), position: 100 });
+            renderColorStops();
+            updateGradient();
+        }
+    });
+
+    typeSelector.addEventListener('change', (e) => {
+        state.type = e.target.value;
+        angleSectionWrapper.classList.toggle('visible', state.type === 'linear');
+        updateGradient();
+    });
+
+    angleSlider.addEventListener('input', (e) => {
+        state.angle = e.target.value;
+        angleValue.textContent = `${state.angle}°`;
+        updateGradient();
+    });
+
+    copyCssBtn.addEventListener('click', (e) => {
+        navigator.clipboard.writeText(cssCode.textContent);
+        showToast('Copied to clipboard!');
+        const btn = e.currentTarget;
+        const icon = btn.querySelector('.copy-icon');
+        const text = btn.querySelector('.copy-text');
+        if(icon) icon.style.display = 'none';
+        text.textContent = '✓';
+        setTimeout(() => {
+            if(icon) icon.style.display = 'block';
+            text.textContent = 'Copy';
+        }, 2000);
+    });
+
+    randomBtn.addEventListener('click', () => {
+        const numColors = Math.floor(Math.random() * 2) + 2;
+        state.colors = [];
+        for (let i = 0; i < numColors; i++) {
+            state.colors.push({ color: getRandomHexColor(), position: i === 0 ? 0 : (i === numColors-1 ? 100 : Math.floor(Math.random() * 101))});
+        }
+        state.angle = Math.floor(Math.random() * 361);
+        state.type = Math.random() < 0.5 ? 'linear' : 'radial';
+        
+        document.getElementById(`type-${state.type}`).checked = true;
+        angleSectionWrapper.classList.toggle('visible', state.type === 'linear');
+        angleSlider.value = state.angle;
+        angleValue.textContent = `${state.angle}°`;
+        
+        renderColorStops();
+        updateGradient();
+    });
+
+    const getRandomHexColor = () => '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+    
+    const showToast = (message) => {
+        const existingToast = document.querySelector('.toast');
+        if (existingToast) existingToast.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+        }, 2000);
+    }
+    
+    angleSectionWrapper.classList.add('visible');
+    renderColorStops();
+    updateGradient();
+});
+</script>
+<div class="toast" style="display:none;"></div>
+</body>
+</html>
