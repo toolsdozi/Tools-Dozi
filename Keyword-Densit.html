@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Strategic SEO Content Analyzer</title>
+  <style>
+    :root {
+      --primary-color: #6f42c1; --secondary-color: #007bff; --success-color: #28a745;
+      --danger-color: #dc3545; --light-bg: #f8f9fa; --card-bg: #ffffff;
+      --text-color: #343a40; --border-color: #dee2e6; --highlight-color: #fff3cd;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--light-bg); margin: 0; padding: 20px;
+    }
+    .container {
+      max-width: 900px; margin: 20px auto; padding: 30px; background-color: var(--card-bg);
+      border-radius: 12px; box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+    }
+    h2 { text-align: center; color: var(--text-color); margin-top: 0; margin-bottom: 30px; }
+    label { font-weight: 600; display: block; margin: 20px 0 8px 0; }
+    #textInput {
+      width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);
+      font-size: 16px; line-height: 1.6; min-height: 250px; resize: vertical; box-sizing: border-box;
+    }
+    .single-keyword-control { display: flex; gap: 10px; align-items: center; }
+    .single-keyword-control input { flex-grow: 1; }
+    .button-group {
+      text-align: center; margin-top: 25px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    }
+    button {
+      padding: 12px 25px; border-radius: 8px; border: none; font-size: 16px; cursor: pointer;
+      transition: all 0.2s ease; font-weight: 600;
+    }
+    #analyzeButton { background-color: var(--primary-color); color: white; }
+    #clearButton { background-color: #6c757d; color: white; }
+    button:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    
+    .tabs { display: flex; border-bottom: 2px solid var(--border-color); margin-top: 30px; }
+    .tab-link {
+      padding: 10px 20px; cursor: pointer; background: none; border: none; font-size: 16px;
+      font-weight: 600; color: #888; border-bottom: 3px solid transparent;
+    }
+    .tab-link.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+    .tab-content { display: none; padding: 20px 5px; } /* Reduced padding for better mobile view */
+    .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .opportunity-list { list-style: none; padding: 0; }
+    .opportunity-list li { padding: 8px 0; display: flex; align-items: center; font-size: 16px; }
+    .opportunity-list .icon { margin-right: 10px; font-size: 20px; }
+    .opportunity-list .included { color: var(--success-color); }
+    .opportunity-list .missing { color: var(--danger-color); }
+    
+    .highlight { background-color: var(--highlight-color); border-radius: 3px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Strategic SEO Content Analyzer</h2>
+    <label for="textInput">Your Text</label>
+    <div id="textInput" contenteditable="true" placeholder="Paste your article text here to reveal game-changing insights..."></div>
+    <div class="button-group">
+        <button id="analyzeButton">Analyze Content & Get SEO Strategy</button>
+        <button id="clearButton">Clear</button>
+    </div>
+
+    <div id="resultArea" style="display:none;">
+        <div class="tabs">
+            <button class="tab-link" data-tab="singleKeywordTab">Single Keyword</button>
+            <button class="tab-link" data-tab="contentAnalysisTab">Content Analysis</button>
+            <button class="tab-link active" data-tab="seoOpportunitiesTab">SEO Opportunities</button>
+        </div>
+        <div id="singleKeywordTab" class="tab-content">
+             <label for="keywordInput">Keyword/Phrase to Highlight:</label>
+             <div class="single-keyword-control">
+                <input type="text" id="keywordInput" placeholder="e.g., content marketing strategy">
+                <button id="highlightButton">Highlight</button>
+             </div>
+             <div id="singleKeywordResult" style="margin-top:20px;"></div>
+        </div>
+        <div id="contentAnalysisTab" class="tab-content"></div>
+        <div id="seoOpportunitiesTab" class="tab-content active"></div>
+    </div>
+</div>
+
+<script>
+// --- SEMANTIC KEYWORD DICTIONARY ---
+const semanticTopics = {
+    'seo': { name: 'Search Engine Optimization', related: ['backlinks', 'keyword research', 'on-page seo', 'technical seo', 'serp', 'meta description', 'title tag', 'link building', 'search engine', 'google'] },
+    'content marketing': { name: 'Content Marketing', related: ['blogging', 'copywriting', 'call to action', 'engagement', 'email marketing', 'social media', 'content strategy', 'audience', 'conversion'] },
+    'digital marketing': { name: 'Digital Marketing', related: ['seo', 'ppc', 'social media marketing', 'email campaigns', 'analytics', 'roi', 'brand awareness', 'lead generation'] },
+    'ai': { name: 'Artificial Intelligence', related: ['machine learning', 'deep learning', 'neural network', 'data science', 'automation', 'algorithm', 'gpt', 'natural language processing'] }
+};
+
+// --- DOM ELEMENTS ---
+const textInput = document.getElementById('textInput');
+const analyzeButton = document.getElementById('analyzeButton');
+const clearButton = document.getElementById('clearButton');
+const resultArea = document.getElementById('resultArea');
+const keywordInput = document.getElementById('keywordInput');
+const highlightButton = document.getElementById('highlightButton');
+const tabs = document.querySelectorAll('.tab-link');
+
+// --- CORE LOGIC ---
+
+function analyzeContent() {
+    // FIX: Always remove highlights before any new analysis for a clean state.
+    removeHighlights();
+    const rawText = textInput.innerText.trim();
+    const words = (rawText.match(/\b\w+\b/g) || []).map(w => w.toLowerCase());
+
+    if (words.length < 10) {
+        alert("Please enter at least 10 words for a meaningful analysis.");
+        return;
+    }
+
+    resultArea.style.display = 'block';
+    
+    // Run all analyses
+    updateContentAnalysisTab(words);
+    updateSeoOpportunitiesTab(rawText.toLowerCase(), words);
+
+    // Reset single keyword tab
+    document.getElementById('singleKeywordResult').innerHTML = '<p>Enter a keyword and click "Highlight" to see its density.</p>';
+    keywordInput.value = '';
+    
+    // FIX: Default view to the most valuable tab.
+    openTab('seoOpportunitiesTab');
+}
+
+function updateContentAnalysisTab(words) {
+    const unigrams = getNgrams(words, 1);
+    const bigrams = getNgrams(words, 2);
+    const trigrams = getNgrams(words, 3);
+    
+    let html = `<h3>Top Keywords (Unigrams)</h3>${createTable(unigrams, words.length)}`;
+    html += `<h3 style="margin-top:30px;">Top 2-Word Phrases (Bigrams)</h3>${createTable(bigrams, words.length)}`;
+    html += `<h3 style="margin-top:30px;">Top 3-Word Phrases (Trigrams)</h3>${createTable(trigrams, words.length)}`;
+    
+    document.getElementById('contentAnalysisTab').innerHTML = html;
+}
+
+function updateSeoOpportunitiesTab(lowerCaseText, words) {
+    // FIX: More accurate topic detection
+    const topPhrases = [...getNgrams(words, 2).map(p => p[0]), ...getNgrams(words, 1).map(p => p[0])];
+    let detectedTopic = null;
+
+    for (const key in semanticTopics) {
+        if (lowerCaseText.includes(key)) { // Check for full phrase first
+            detectedTopic = key;
+            break;
+        }
+    }
+    // Fallback detection if full phrase isn't found
+    if (!detectedTopic) {
+        for (const phrase of topPhrases) {
+             for (const key in semanticTopics) {
+                if (semanticTopics[key].related.includes(phrase)) {
+                     detectedTopic = key;
+                     break;
+                }
+             }
+             if(detectedTopic) break;
+        }
+    }
+
+    let html = '<h3>Actionable SEO Checklist</h3>';
+    if (detectedTopic) {
+        html += `<p>Main Topic Detected: <strong>${semanticTopics[detectedTopic].name}</strong>. Here's a checklist to improve content depth:</p>`;
+        html += '<ul class="opportunity-list">';
+        semanticTopics[detectedTopic].related.forEach(term => {
+            const regex = new RegExp(`\\b${term}\\b`, 'i');
+            if (regex.test(lowerCaseText)) {
+                html += `<li class="included"><span class="icon">✅</span>${term} (Included)</li>`;
+            } else {
+                html += `<li class="missing"><span class="icon">❌</span>${term} (Missing Opportunity)</li>`;
+            }
+        });
+        html += '</ul>';
+    } else {
+        html += '<p>We could not automatically detect a primary topic. Try making the topic more explicit in your text.</p>';
+    }
+    document.getElementById('seoOpportunitiesTab').innerHTML = html;
+}
+
+// --- HELPER & UI FUNCTIONS ---
+
+function getNgrams(words, n) {
+    const stopWords = new Set(["a","about","an","are","as","at","be","by","for","from","how","in","is","it","of","on","or","that","the","this","to","was","what","when","where","who","will","with","and","your","you","we","i"]);
+    const ngrams = {};
+    for (let i = 0; i <= words.length - n; i++) {
+        const ngramArr = words.slice(i, i + n);
+        // Don't create n-grams that start or end with a stopword
+        if (stopWords.has(ngramArr[0]) || stopWords.has(ngramArr[ngramArr.length - 1])) continue;
+        const ngram = ngramArr.join(' ');
+        ngrams[ngram] = (ngrams[ngram] || 0) + 1;
+    }
+    return Object.entries(ngrams).sort((a, b) => b[1] - a[1]).slice(0, 10);
+}
+
+function createTable(data, totalWords) {
+    if (data.length === 0) return '<p>Not enough data for this analysis.</p>';
+    let table = '<table><tr><th>Phrase</th><th>Count</th></tr>';
+    data.forEach(([phrase, count]) => {
+        table += `<tr><td>${phrase}</td><td>${count}</td></tr>`;
+    });
+    return table + '</table>';
+}
+
+function handleSingleKeywordCheck() {
+    removeHighlights();
+    const rawText = textInput.innerText.trim();
+    const keyword = keywordInput.value.trim();
+    const totalWordCount = (rawText.match(/\b\w+\b/g) || []).length;
+    
+    if (!keyword || totalWordCount === 0) {
+        document.getElementById('singleKeywordResult').innerHTML = '<p>Please enter text and a keyword.</p>';
+        return;
+    }
+
+    const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`\\b${escapedKeyword}\\b`, 'gi');
+    const count = (rawText.match(regex) || []).length;
+    const density = totalWordCount > 0 ? ((count / totalWordCount) * 100).toFixed(2) : 0;
+    
+    document.getElementById('singleKeywordResult').innerHTML = `<p><strong>Density:</strong> ${density}% | <strong>Count:</strong> ${count} | <strong>Total Words:</strong> ${totalWordCount}</p>`;
+    
+    const newHTML = textInput.innerHTML.replace(regex, match => `<span class="highlight">${match}</span>`);
+    textInput.innerHTML = newHTML;
+}
+
+function removeHighlights() {
+    const sel = window.getSelection();
+    const range = sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+    
+    // Store cursor position relative to text nodes
+    const cursorPos = range ? getCursorPosition(textInput, range) : null;
+
+    textInput.innerHTML = textInput.innerText;
+
+    // Restore cursor position
+    if (cursorPos) {
+        restoreCursorPosition(textInput, cursorPos);
+    }
+}
+
+// FIX: Functions to save and restore cursor position to prevent it from jumping.
+function getCursorPosition(parent, range) {
+    let position = 0;
+    const treeWalker = document.createTreeWalker(parent, Node.TEXT_NODE);
+    while (treeWalker.nextNode()) {
+        if (treeWalker.currentNode === range.startContainer) {
+            position += range.startOffset;
+            return position;
+        }
+        position += treeWalker.currentNode.length;
+    }
+    return position;
+}
+
+function restoreCursorPosition(parent, position) {
+    const treeWalker = document.createTreeWalker(parent, Node.TEXT_NODE);
+    let currentPos = 0;
+    while (treeWalker.nextNode()) {
+        const nodeLength = treeWalker.currentNode.length;
+        if (currentPos + nodeLength >= position) {
+            const range = document.createRange();
+            range.setStart(treeWalker.currentNode, position - currentPos);
+            range.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            return;
+        }
+        currentPos += nodeLength;
+    }
+}
+
+
+function clearAll() {
+    textInput.innerHTML = '';
+    resultArea.style.display = 'none';
+    keywordInput.value = '';
+}
+
+function openTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-link').forEach(link => link.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+    document.querySelector(`.tab-link[data-tab="${tabName}"]`).classList.add('active');
+}
+
+// --- EVENT LISTENERS ---
+analyzeButton.addEventListener('click', analyzeContent);
+clearButton.addEventListener('click', clearAll);
+highlightButton.addEventListener('click', handleSingleKeywordCheck); // FIX: Listen on button, not input
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => openTab(tab.dataset.tab));
+});
+
+</script>
+</body>
+</html>
