@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Advanced Image Color Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --border-radius: 12px;
+      --transition-speed: 0.3s;
+      --font-main: 'Inter', sans-serif;
+      --font-mono: 'Roboto Mono', monospace;
+    }
+
+    :root[data-theme='dark'] {
+      --bg-start: #0F0C29; --bg-mid: #302B63; --bg-end: #24243E;
+      --surface-color: rgba(30, 30, 42, 0.85);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --primary-text-color: #F0F0F0;
+      --secondary-text-color: #A0A0A0;
+      --accent-color: #00BCD4;
+      --accent-glow-color: rgba(0, 188, 212, 0.3);
+      --shadow-color: rgba(0,0,0,0.5);
+      --input-bg-color: rgba(0,0,0,0.3);
+      --text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+
+    :root[data-theme='light'] {
+      --bg-start: #FDFBFB; --bg-mid: #EBEDEE; --bg-end: #FDFBFB;
+      --surface-color: rgba(255, 255, 255, 0.9);
+      --border-color: rgba(0, 0, 0, 0.1);
+      --primary-text-color: #111;
+      --secondary-text-color: #666;
+      --accent-color: #009688;
+      --accent-glow-color: rgba(0, 150, 136, 0.2);
+      --shadow-color: rgba(0,0,0,0.1);
+      --input-bg-color: rgba(0,0,0,0.03);
+      --text-shadow: none;
+    }
+    
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      font-family: var(--font-main);
+      background: linear-gradient(-45deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+      background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+      color: var(--primary-text-color); display: flex; justify-content: center;
+      align-items: center; min-height: 100vh; padding: 1.5rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+    .container {
+      width: 100%; max-width: 1200px;
+      background: var(--surface-color); backdrop-filter: blur(25px);
+      border: 1px solid var(--border-color); border-radius: 20px;
+      padding: 2rem; box-shadow: 0 20px 60px var(--shadow-color);
+    }
+    
+    .main-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+    
+    .image-panel {
+      background: var(--input-bg-color); border-radius: var(--border-radius);
+      border: 2px dashed var(--border-color);
+      display: flex; align-items: center; justify-content: center;
+      min-height: 400px; position: relative;
+    }
+    .image-panel.drag-over { border-color: var(--accent-color); }
+    #canvas { max-width: 100%; max-height: 60vh; object-fit: contain; cursor: crosshair; }
+    .upload-prompt { text-align: center; color: var(--secondary-text-color); padding: 1rem; }
+    .upload-prompt button {
+        background: var(--accent-color); color: white; border: none; padding: 0.75rem 1.5rem;
+        border-radius: 8px; font-weight: 500; cursor: pointer; margin-top: 1rem;
+    }
+    #image-input { display: none; }
+
+    #loupe {
+        width: 120px; height: 120px; border-radius: 50%;
+        border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        position: absolute; pointer-events: none; display: none;
+        background: #fff; image-rendering: pixelated;
+        z-index: 100;
+    }
+    
+    .info-panel h3 { 
+        margin-top: 0; 
+        margin-bottom: 1rem; 
+        color: var(--primary-text-color);
+        text-shadow: var(--text-shadow);
+    }
+    .color-display { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    #color-preview { width: 60px; height: 60px; border-radius: 8px; border: 2px solid var(--border-color); flex-shrink: 0; }
+    
+    .color-codes { 
+        width: 100%;
+        font-family: var(--font-mono);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .color-code-item {
+        background: var(--input-bg-color);
+        border: 1px solid var(--border-color);
+        padding: 0.6rem 0.8rem;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        transition: background-color 0.2s;
+    }
+    .color-code-item:hover {
+        background-color: rgba(128,128,128,0.2);
+    }
+    .color-code-item .label {
+        color: var(--secondary-text-color);
+        font-weight: 500;
+    }
+    .color-code-item .value {
+        color: var(--primary-text-color);
+        font-weight: 500;
+        text-shadow: var(--text-shadow);
+    }
+
+    .palette { display: grid; grid-template-columns: repeat(auto-fit, minmax(40px, 1fr)); gap: 0.75rem; }
+    .palette-color {
+        width: 100%; padding-top: 100%;
+        border-radius: 8px; cursor: pointer; border: 1px solid var(--border-color);
+        transition: transform var(--transition-speed); position: relative;
+    }
+    .palette-color:hover { transform: scale(1.1); }
+    
+    .toast {
+      position: fixed; bottom: 2rem; left: 50%;
+      transform: translateX(-50%) translateY(200%);
+      padding: 1rem 1.5rem; border-radius: 8px; font-weight: 500;
+      color: #fff; background: #333; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      transition: transform 0.4s ease-in-out; z-index: 1001;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    
+    @media (max-width: 900px) {
+        .main-layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="main-layout">
+      <div class="image-panel" id="drop-zone">
+        <canvas id="canvas"></canvas>
+        <div id="loupe"></div>
+        <div class="upload-prompt" id="upload-prompt">
+          <h3>Drag & Drop an Image Here</h3>
+          <p>or</p>
+          <button id="upload-btn">Select Image</button>
+          <input type="file" id="image-input" accept="image/*">
+        </div>
+      </div>
+
+      <div class="info-panel">
+        <h3>Live Color Info</h3>
+        <div class="color-display">
+          <div id="color-preview"></div>
+          <div class="color-codes">
+            <div id="hex-code" class="color-code-item" title="Click to copy">
+                <span class="label">HEX</span>
+                <span class="value"></span>
+            </div>
+            <div id="rgb-code" class="color-code-item" title="Click to copy">
+                <span class="label">RGB</span>
+                <span class="value"></span>
+            </div>
+            <div id="hsl-code" class="color-code-item" title="Click to copy">
+                <span class="label">HSL</span>
+                <span class="value"></span>
+            </div>
+          </div>
+        </div>
+
+        <h3>Dominant Colors Palette</h3>
+        <div class="palette" id="palette"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const dropZone = document.getElementById('drop-zone');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const imageInput = document.getElementById('image-input');
+    const uploadBtn = document.getElementById('upload-btn');
+    const uploadPrompt = document.getElementById('upload-prompt');
+    const loupe = document.getElementById('loupe');
+    const colorPreview = document.getElementById('color-preview');
+    const hexCodeDiv = document.getElementById('hex-code').querySelector('.value');
+    const rgbCodeDiv = document.getElementById('rgb-code').querySelector('.value');
+    const hslCodeDiv = document.getElementById('hsl-code').querySelector('.value');
+    const paletteContainer = document.getElementById('palette');
+
+    const handleImage = (file) => {
+        if (!file || !file.type.startsWith('image/')) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                uploadPrompt.style.display = 'none';
+                drawImageToCanvas(img);
+                generatePalette(img, 8);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const drawImageToCanvas = (img) => {
+        const panelWidth = dropZone.clientWidth;
+        const panelHeight = dropZone.clientHeight;
+        const imgRatio = img.width / img.height;
+        const panelRatio = panelWidth / panelHeight;
+        let canvasWidth, canvasHeight;
+        if (imgRatio > panelRatio) {
+            canvasWidth = panelWidth;
+            canvasHeight = panelWidth / imgRatio;
+        } else {
+            canvasHeight = panelHeight;
+            canvasWidth = panelHeight * imgRatio;
+        }
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+    };
+
+    const updateColorInfo = (r, g, b) => {
+        const hex = rgbToHex(r, g, b);
+        const hsl = rgbToHsl(r, g, b);
+        colorPreview.style.backgroundColor = hex;
+        hexCodeDiv.textContent = hex.toUpperCase();
+        rgbCodeDiv.textContent = `rgb(${r}, ${g}, ${b})`;
+        hslCodeDiv.textContent = `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`;
+    };
+    
+    const showToast = (message) => {
+        const existingToast = document.querySelector('.toast');
+        if (existingToast) existingToast.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 500);
+        }, 2000);
+    }
+
+    const generatePalette = (img, colorCount) => {
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        const maxDim = 100;
+        const scale = maxDim / Math.max(img.width, img.height);
+        tempCanvas.width = img.width * scale;
+        tempCanvas.height = img.height * scale;
+        tempCtx.drawImage(img, 0, 0, tempCanvas.width, tempCanvas.height);
+        const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height).data;
+        const colorMap = {};
+        for (let i = 0; i < imageData.length; i += 4) {
+            const alpha = imageData[i + 3];
+            // BUG FIX: Ignore transparent/semi-transparent pixels for more accurate palettes
+            if (alpha > 128) {
+                const r = Math.round(imageData[i] / 32) * 32;
+                const g = Math.round(imageData[i + 1] / 32) * 32;
+                const b = Math.round(imageData[i + 2] / 32) * 32;
+                const key = `${r},${g},${b}`;
+                colorMap[key] = (colorMap[key] || 0) + 1;
+            }
+        }
+        const sortedColors = Object.keys(colorMap).sort((a, b) => colorMap[b] - colorMap[a]);
+        paletteContainer.innerHTML = '';
+        sortedColors.slice(0, colorCount).forEach(colorString => {
+            const [r, g, b] = colorString.split(',').map(Number);
+            const hex = rgbToHex(r, g, b);
+            const colorDiv = document.createElement('div');
+            colorDiv.className = 'palette-color';
+            colorDiv.style.backgroundColor = hex;
+            colorDiv.title = hex.toUpperCase() + ' - Click to copy';
+            colorDiv.addEventListener('click', () => {
+                navigator.clipboard.writeText(hex.toUpperCase());
+                showToast(`Copied ${hex.toUpperCase()}`);
+                updateColorInfo(r, g, b);
+            });
+            paletteContainer.appendChild(colorDiv);
+        });
+    };
+    
+    const handlePointerMove = (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) {
+            loupe.style.display = 'none';
+            return;
+        }
+        const pixel = ctx.getImageData(x, y, 1, 1).data;
+        updateColorInfo(pixel[0], pixel[1], pixel[2]);
+        loupe.style.display = 'block';
+        const loupeX = (e.touches ? clientX : e.pageX) - 60;
+        const loupeY = (e.touches ? clientY - 140 : e.pageY) - 60;
+        loupe.style.left = loupeX + 'px';
+        loupe.style.top = loupeY + 'px';
+        loupe.style.backgroundImage = `url(${canvas.toDataURL()})`;
+        const zoomFactor = 15;
+        const bgSize = `${canvas.width * zoomFactor}px`;
+        const bgX = -x * zoomFactor + 60;
+        const bgY = -y * zoomFactor + 60;
+        loupe.style.backgroundSize = bgSize;
+        loupe.style.backgroundPosition = `${bgX}px ${bgY}px`;
+    }
+
+    const handlePointerUp = () => {
+        navigator.clipboard.writeText(hexCodeDiv.textContent);
+        showToast(`Copied ${hexCodeDiv.textContent}`);
+    }
+
+    uploadBtn.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', e => handleImage(e.target.files[0]));
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => dropZone.addEventListener(eventName, e => e.preventDefault()));
+    ['dragenter', 'dragover'].forEach(eventName => dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over')));
+    ['dragleave', 'drop'].forEach(eventName => dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over')));
+    dropZone.addEventListener('drop', e => handleImage(e.dataTransfer.files[0]));
+
+    canvas.addEventListener('mousemove', handlePointerMove);
+    canvas.addEventListener('touchmove', handlePointerMove, { passive: true });
+    canvas.addEventListener('touchstart', handlePointerMove, { passive: true });
+    canvas.addEventListener('mouseleave', () => loupe.style.display = 'none');
+    canvas.addEventListener('touchend', () => loupe.style.display = 'none');
+    canvas.addEventListener('click', handlePointerUp);
+    
+    document.querySelectorAll('.color-code-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+            const value = e.currentTarget.querySelector('.value').textContent;
+            if (value) {
+                navigator.clipboard.writeText(value);
+                showToast(`Copied ${value}`);
+            }
+        });
+    });
+
+    const rgbToHex = (r, g, b) => '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    const rgbToHsl = (r, g, b) => {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+        if (max !== min) {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            h /= 6;
+        }
+        return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+    };
+});
+</script>
+
+</body>
+</html>
