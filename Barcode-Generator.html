@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Premium Barcode Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(90deg, #FDBB2D 0%, #D4AF37 50%, #B8860B 100%);
+      --background-start: #0F0C29; --background-mid: #302B63; --background-end: #24243E;
+      --surface-color: rgba(26, 26, 42, 0.85); --text-color: #E0E0E0; --text-muted-color: #A0A0A0;
+      --border-color: rgba(255, 215, 0, 0.2); --error-color: #e74c3c;
+      --border-radius: 16px; --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: 'Inter', sans-serif; color: var(--text-color);
+      background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
+      background-size: 400% 400%; animation: gradientBG 20s ease infinite;
+      display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    .container {
+      width: 100%; max-width: 900px;
+      background: var(--surface-color); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color); padding: 2.5rem;
+      display: flex; gap: 2.5rem;
+    }
+    .controls, .preview { flex: 1; }
+    
+    h1 {
+        margin-top: 0; margin-bottom: 2rem; font-weight: 700; font-size: 2rem;
+        background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        text-align: center;
+    }
+    
+    .controls { max-height: 600px; overflow-y: auto; padding-right: 15px; }
+
+    .input-group { margin-bottom: 1.5rem; }
+    .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted-color); font-weight: 500;}
+    input[type="text"], select {
+        width: 100%; padding: 0.75rem; font-size: 1rem;
+        border: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2);
+        color: var(--text-color); border-radius: 8px; font-family: 'Inter', sans-serif;
+    }
+    #validation-message { color: var(--error-color); font-size: 0.9rem; margin-top: 0.5rem; min-height: 20px; }
+    .row { display: flex; gap: 1rem; }
+    .row > .input-group { flex: 1; }
+    input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; border-radius: 8px; cursor: pointer; }
+    input[type="range"] { width: 100%; }
+
+    .switch-container { display: flex; justify-content: space-between; align-items: center; }
+    .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.3); transition: .4s; border-radius: 28px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background: var(--primary-gradient); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    .preview { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    #barcode-container {
+        width: 100%; min-height: 150px;
+        background: #fff; padding: 20px; border-radius: 12px;
+        display: flex; justify-content: center; align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .download-options { display: flex; gap: 1rem; align-items: center; margin-top: 1.5rem; }
+    .button { background: var(--primary-gradient); color: #111; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; }
+    .button:disabled { background: #555; cursor: not-allowed; color: #888; }
+    
+    @media (max-width: 768px) { .container { flex-direction: column; } .controls { max-height: none; } }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="controls">
+        <h1>Barcode Studio</h1>
+        <div class="input-group">
+            <label for="barcodeText">Data</label>
+            <input type="text" id="barcodeText" placeholder="Enter data for barcode" />
+            <div id="validation-message"></div>
+        </div>
+        <div class="input-group">
+            <label for="barcodeFormat">Format (Symbology)</label>
+            <select id="barcodeFormat">
+                <option value="CODE128">CODE128</option>
+                <option value="CODE39">CODE39</option>
+                <option value="EAN13">EAN-13</option>
+                <option value="EAN8">EAN-8</option>
+                <option value="UPC">UPC</option>
+                <option value="ITF">ITF</option>
+                <option value="MSI">MSI</option>
+            </select>
+        </div>
+        <hr style="border-color: var(--border-color); margin: 2rem 0;">
+        <div class="row">
+            <div class="input-group"><label for="lineColor">Line Color</label><input type="color" id="lineColor" value="#000000"></div>
+            <div class="input-group"><label for="bgColor">Background Color</label><input type="color" id="bgColor" value="#FFFFFF"></div>
+        </div>
+        <div class="row">
+            <div class="input-group"><label for="barWidth">Bar Width</label><input type="range" id="barWidth" min="1" max="4" step="0.5" value="2"></div>
+            <div class="input-group"><label for="barHeight">Bar Height</label><input type="range" id="barHeight" min="20" max="150" step="5" value="100"></div>
+        </div>
+        <div class="input-group switch-container">
+            <label for="displayValue">Show Text</label>
+            <label class="switch"><input type="checkbox" id="displayValue" checked><span class="slider"></span></label>
+        </div>
+    </div>
+    <div class="preview">
+        <div id="barcode-container">
+            <svg id="barcodeSvg"></svg>
+        </div>
+        <div class="download-options">
+            <button id="downloadBtn" class="button" disabled>Download</button>
+            <select id="download-format"><option value="svg">SVG</option><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
+        </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script>
+    const textInput = document.getElementById("barcodeText");
+    const formatSelect = document.getElementById("barcodeFormat");
+    const validationMessage = document.getElementById("validation-message");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const allInputs = document.querySelectorAll('.controls input, .controls select');
+
+    const validationRules = {
+        'CODE128': { regex: /.*/, message: '' }, // Can encode any character
+        'CODE39': { regex: /^[A-Z0-9-.$/+\s%*]*$/, message: 'CODE39 supports uppercase letters, numbers, and symbols: -.$/+%*' },
+        'EAN13': { regex: /^\d{12,13}$/, message: 'EAN-13 requires 12 or 13 digits.' },
+        'EAN8': { regex: /^\d{7,8}$/, message: 'EAN-8 requires 7 or 8 digits.' },
+        'UPC': { regex: /^\d{11,12}$/, message: 'UPC requires 11 or 12 digits.' },
+        'ITF': { regex: /^\d+$/, message: 'ITF requires an even number of digits.' },
+        'MSI': { regex: /^\d+$/, message: 'MSI supports only digits.' },
+    };
+
+    allInputs.forEach(input => input.addEventListener('input', generateBarcode));
+
+    function validateInput(text, format) {
+        if (!text) return { valid: false, message: 'Input data cannot be empty.' };
+
+        const rule = validationRules[format];
+        if (!rule) return { valid: true };
+
+        if (!rule.regex.test(text)) {
+            return { valid: false, message: rule.message };
+        }
+        
+        // Special case for ITF
+        if (format === 'ITF' && text.length % 2 !== 0) {
+            return { valid: false, message: 'ITF requires an even number of digits.' };
+        }
+
+        return { valid: true };
+    }
+
+    function generateBarcode() {
+        const text = textInput.value;
+        const format = formatSelect.value;
+        
+        const { valid, message } = validateInput(text, format);
+
+        validationMessage.textContent = valid ? '' : message;
+        downloadBtn.disabled = !valid;
+        
+        if (!valid) {
+            document.getElementById('barcodeSvg').innerHTML = '';
+            return;
+        }
+
+        try {
+            const options = {
+                format: format,
+                lineColor: document.getElementById("lineColor").value,
+                background: document.getElementById("bgColor").value,
+                width: parseFloat(document.getElementById("barWidth").value),
+                height: parseInt(document.getElementById("barHeight").value),
+                displayValue: document.getElementById("displayValue").checked
+            };
+            JsBarcode("#barcodeSvg", text, options);
+            validationMessage.textContent = ''; // Clear message on success
+        } catch (e) {
+            validationMessage.textContent = e.message.replace("JsBarcode error: ", "");
+            downloadBtn.disabled = true;
+        }
+    }
+    
+    downloadBtn.addEventListener('click', () => {
+        const svg = document.getElementById("barcodeSvg");
+        const format = document.getElementById("download-format").value;
+        const serializer = new XMLSerializer();
+        const source = serializer.serializeToString(svg);
+
+        if (format === 'svg') {
+            const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            triggerDownload(url, "barcode.svg");
+        } else { // PNG or JPEG
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            const img = new Image();
+            
+            img.onload = () => {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.fillStyle = document.getElementById("bgColor").value;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(img, 0, 0);
+                const url = canvas.toDataURL(`image/${format}`);
+                triggerDownload(url, `barcode.${format}`);
+            };
+            img.src = 'data:image/svg+xml;base64,' + btoa(source);
+        }
+    });
+    
+    function triggerDownload(url, filename) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+    }
+
+    // Initial generation
+    textInput.value = "123456789012";
+    formatSelect.value = "EAN13";
+    generateBarcode();
+  </script>
+</body>
+</html>
