@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Premium UUID Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(90deg, #FDBB2D 0%, #D4AF37 50%, #B8860B 100%);
+      --background-start: #0F0C29; --background-mid: #302B63; --background-end: #24243E;
+      --surface-color: rgba(26, 26, 42, 0.85); --text-color: #E0E0E0; --text-muted-color: #A0A0A0;
+      --border-color: rgba(255, 215, 0, 0.2);
+      --border-radius: 16px; --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: 'Inter', sans-serif; color: var(--text-color);
+      background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
+      background-size: 400% 400%; animation: gradientBG 20s ease infinite;
+      display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+    }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    
+    .container {
+      width: 100%; max-width: 600px;
+      background: var(--surface-color); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+      border: 1px solid var(--border-color); padding: 2.5rem;
+    }
+    
+    h1 {
+        margin-top: 0; margin-bottom: 2rem; font-weight: 700; font-size: 2rem;
+        background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        text-align: center;
+    }
+    
+    .options-panel {
+        background: rgba(0,0,0,0.2);
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-top: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { color: var(--text-muted-color); font-weight: 500; font-size: 0.9rem; }
+    input[type="number"] {
+        background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+        color: var(--text-color); border-radius: 8px; padding: 0.5rem;
+        font-family: 'Inter', sans-serif; width: 80px;
+    }
+
+    .switch-container { display: flex; align-items: center; gap: 0.75rem; }
+    .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.3); transition: .4s; border-radius: 28px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background: var(--primary-gradient); }
+    input:checked + .slider:before { transform: translateX(22px); }
+
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; }
+    .results-header h3 { color: var(--text-muted-color); margin: 0; }
+    
+    #results-list {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0 0 0;
+        height: 300px;
+        overflow-y: auto;
+        background: rgba(0,0,0,0.2);
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+    }
+    .uuid-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        font-family: 'Roboto Mono', monospace;
+    }
+    .uuid-item:last-child { border-bottom: none; }
+    
+    .button {
+      background: var(--primary-gradient); color: #111; border: none; padding: 0.8rem 1.5rem;
+      border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); }
+    .button.copy-btn {
+        background: none; border: 1px solid var(--border-color); color: var(--text-muted-color);
+        padding: 0.4rem 0.8rem; font-size: 0.9rem;
+    }
+    .button.copy-btn:hover { background: rgba(255,255,255,0.1); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>UUID Generator</h1>
+    <button id="generateBtn" class="button" style="width: 100%;">Generate</button>
+    
+    <div class="options-panel">
+        <div class="input-group">
+            <label for="amount">Amount</label>
+            <input type="number" id="amount" value="5" min="1" max="100">
+        </div>
+        <div class="input-group">
+            <label>Options</label>
+            <div style="display: flex; gap: 1.5rem;">
+                <div class="switch-container"><label class="switch"><input type="checkbox" id="uppercase"><span class="slider"></span></label><span>Uppercase</span></div>
+                <div class="switch-container"><label class="switch"><input type="checkbox" id="no-hyphens"><span class="slider"></span></label><span>No Hyphens</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="results-header">
+        <h3>Generated UUIDs</h3>
+        <button id="copyAllBtn" class="button copy-btn">Copy All</button>
+    </div>
+    <ul id="results-list"></ul>
+  </div>
+
+  <script>
+    const generateBtn = document.getElementById('generateBtn');
+    const resultsList = document.getElementById('results-list');
+    const amountInput = document.getElementById('amount');
+    const uppercaseToggle = document.getElementById('uppercase');
+    const noHyphensToggle = document.getElementById('no-hyphens');
+    const copyAllBtn = document.getElementById('copyAllBtn');
+
+    // Generate UUID function using modern crypto API with fallback
+    function createUUID() {
+        if (window.crypto && window.crypto.randomUUID) {
+            return window.crypto.randomUUID();
+        } else {
+            // Fallback for older browsers
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+    }
+    
+    function generateUUIDs() {
+        resultsList.innerHTML = ''; // Clear previous results
+        const amount = parseInt(amountInput.value) || 1;
+        const isUppercase = uppercaseToggle.checked;
+        const hasNoHyphens = noHyphensToggle.checked;
+
+        for (let i = 0; i < amount; i++) {
+            let uuid = createUUID();
+            
+            if (isUppercase) {
+                uuid = uuid.toUpperCase();
+            }
+            if (hasNoHyphens) {
+                uuid = uuid.replace(/-/g, '');
+            }
+
+            const li = document.createElement('li');
+            li.className = 'uuid-item';
+            
+            const uuidText = document.createElement('span');
+            uuidText.textContent = uuid;
+            
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'button copy-btn';
+            copyBtn.textContent = 'Copy';
+            copyBtn.dataset.uuid = uuid; // Store UUID in data attribute
+            
+            li.appendChild(uuidText);
+            li.appendChild(copyBtn);
+            resultsList.appendChild(li);
+        }
+    }
+    
+    // Modern copy to clipboard with UI feedback
+    async function copyToClipboard(text, element) {
+        try {
+            await navigator.clipboard.writeText(text);
+            const originalText = element.textContent;
+            element.textContent = 'Copied!';
+            setTimeout(() => {
+                element.textContent = originalText;
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy to clipboard.');
+        }
+    }
+
+    // Event Delegation for individual copy buttons
+    resultsList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('copy-btn')) {
+            copyToClipboard(e.target.dataset.uuid, e.target);
+        }
+    });
+
+    // Copy all UUIDs
+    copyAllBtn.addEventListener('click', (e) => {
+        const allUuids = Array.from(resultsList.querySelectorAll('.uuid-item span'))
+                              .map(span => span.textContent)
+                              .join('\n');
+        
+        if (allUuids) {
+            copyToClipboard(allUuids, e.target);
+        }
+    });
+
+    generateBtn.addEventListener('click', generateUUIDs);
+
+    // Initial generation on page load
+    window.onload = generateUUIDs;
+  </script>
+</body>
+</html>
