@@ -248,7 +248,10 @@
             </div>
         </section>
         
-        </main>
+        <div id="tools-container">
+            </div>
+        
+    </main>
 
     <section class="testimonial-section">
         <div class="container">
@@ -335,7 +338,7 @@
             slidesPerView: 'auto',
             loop: true,
             autoplay: {
-                delay: 2500, // Slightly faster autoplay
+                delay: 2500,
                 disableOnInteraction: false,
             },
             coverflowEffect: {
@@ -350,7 +353,6 @@
             },
         });
 
-        // --- All other features remain ---
         const allToolsData = {
             "Image Tools": { icon: "fas fa-images", description: "Edit, convert and optimize your images with our powerful yet simple tools.", tools: [ { icon: "fas fa-exchange-alt", name: "Image Converter", desc: "Convert between JPG, PNG, GIF, WEBP and more formats", link: "Image-Converter.html" }, { icon: "fas fa-compress-alt", name: "Image Compressor", desc: "Reduce image file size without losing quality", link: "Image-Compressor.html" }, { icon: "fas fa-expand-alt", name: "Image Resizer", desc: "Resize images to any dimension while maintaining aspect ratio", link: "Image-Resizer.html" }, { icon: "fas fa-crop-alt", name: "Image Cropper", desc: "Crop images to remove unwanted areas or focus on specific parts", link: "Image-Crop.html" }, { icon: "fas fa-font", name: "Image to Text (OCR)", desc: "Extract text from images with optical character recognition", link: "Image-To-Text.html" }, { icon: "fas fa-sync-alt", name: "Image Rotator/Flipper", desc: "Rotate or flip images horizontally/vertically", link: "Image-Rotator.html" } ] },
             "Document Tools": { icon: "fas fa-file-lines", description: "Manage and convert your documents with ease.", tools: [ { icon: "fas fa-file-pdf", name: "PDF to Word / Word to PDF", desc: "Convert between PDF and Word documents seamlessly", link: "PDF-To-Word.html" }, { icon: "fas fa-file-archive", name: "PDF Compressor", desc: "Reduce PDF file size while maintaining quality", link: "PDF-Compressor.html" }, { icon: "fas fa-cut", name: "PDF Merger & Splitter", desc: "Combine multiple PDFs or split pages from a PDF", link: "PDF-Merger.html" }, { icon: "fas fa-exchange-alt", name: "Document Converter", desc: "Convert between various document formats", link: "Document-Converter.html" }, { icon: "fas fa-lock", name: "PDF Lock/Unlock", desc: "Add or remove passwords from PDF files", link: "PDF-Lock.html" }, { icon: "fas fa-signature", name: "eSign PDF", desc: "Add digital signatures to your PDF documents", link: "E-Sign-PDF.html" } ] },
@@ -361,23 +363,28 @@
             "SEO & Marketing Tools": { icon: "fas fa-chart-line", description: "Optimize your content and analyze your website performance.", tools: [ { icon: "fas fa-key", name: "Keyword Density Checker", desc: "Analyze keyword frequency and density in your content", link: "Keyword-Densit.html" }, { icon: "fas fa-tags", name: "Meta Tag Analyzer", desc: "Check and analyze meta tags for SEO optimization", link: "Meta-Tag.html" }, { icon: "fas fa-font", name: "Word Counter", desc: "Count words, characters and reading time for SEO content", link: "Word-Counter.html" } ] },
             "Utility Tools": { icon: "fas fa-toolbox", description: "Handy tools for various everyday needs.", tools: [ { icon: "fas fa-qrcode", name: "QR Code Generator & Scanner", desc: "Create and scan QR codes for URLs, text, and more", link: "QR-Code.html" }, { icon: "fas fa-barcode", name: "Barcode Generator", desc: "Generate barcodes in various formats for products", link: "Barcode-Generator.html" }, { icon: "fas fa-fingerprint", name: "UUID Generator", desc: "Generate universally unique identifiers (UUIDs)", link: "UUID-Generator.html" }, { icon: "fas fa-ruler-combined", name: "Unit Converter", desc: "Convert between various units of measurement", link: "Unit-Converter.html" }, { icon: "fas fa-globe", name: "Time Zone Converter", desc: "Convert times between different time zones", link: "Time-Zone-Converter.html" }, { icon: "fas fa-random", name: "Random Number/Password Generator", desc: "Generate secure random numbers and passwords", link: "Random-Password.html" } ] }
         };
-        const mainElement = document.querySelector('main');
+        
+        const toolsContainer = document.getElementById('tools-container');
         function createToolCardHTML(tool) { return `<div class="tool-card" data-search-name="${tool.name.toLowerCase()}" data-search-desc="${tool.desc.toLowerCase()}"><div class="tool-icon-container"><i class="${tool.icon}"></i></div><h3>${tool.name}</h3><p>${tool.desc}</p><a href="${tool.link}" class="tool-button">Use Tool</a></div>`; }
         function createIdFromString(str) { return str.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-'); }
+        
         for (const category in allToolsData) {
             const categoryData = allToolsData[category];
             const section = document.createElement('section');
             section.className = 'tools-section';
             section.id = createIdFromString(category);
             section.innerHTML = `<div class="container"><div class="section-header"><div class="header-icon"><i class="${categoryData.icon}"></i></div><h2>${category}</h2><p>${categoryData.description}</p></div><div class="tools-grid">${categoryData.tools.map(createToolCardHTML).join('')}</div></div>`;
-            mainElement.appendChild(section);
+            toolsContainer.appendChild(section);
         }
+        
         const header = document.getElementById('mainHeader');
         window.addEventListener('scroll', () => { header.classList.toggle('scrolled', window.scrollY > 50); });
+        
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
         const mainNav = document.getElementById('mainNav');
         mobileMenuBtn.addEventListener('click', () => mainNav.classList.toggle('active'));
         mainNav.querySelectorAll('a').forEach(link => { link.addEventListener('click', () => mainNav.classList.remove('active')); });
+        
         const searchInput = document.getElementById('searchInput');
         const resultsContainer = document.getElementById('searchResults');
         const resultsList = document.getElementById('resultsList');
@@ -411,6 +418,7 @@
         }
         searchInput.addEventListener('input', performSearch);
         document.addEventListener('click', (event) => { if (!event.target.closest('.search-section')) { resultsContainer.classList.remove('visible'); } });
+        
         const gridObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
