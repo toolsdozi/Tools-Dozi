@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Real-time Base64 Encoder/Decoder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Roboto+Mono:wght@400&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -22,12 +22,13 @@
       --border-color: rgba(255, 215, 0, 0.2);
       --primary-text-color: #F0F0F0;
       --secondary-text-color: #A0A0A0;
-      --gold-start: #FDBB2D; --gold-end: #D4AF37; --purple-accent: #8A2BE2;
+      --gold-start: #FDBB2D; --gold-end: #D4AF37;
       --gold-gradient: linear-gradient(45deg, var(--gold-start), var(--gold-end));
       --gold-glow-color: rgba(253, 187, 45, 0.3);
       --shadow-color: rgba(0,0,0,0.5);
       --input-bg-color: rgba(0,0,0,0.3);
       --success-color: #00e676;
+      --error-color: #e74c3c;
     }
 
     :root[data-theme='light'] {
@@ -36,12 +37,13 @@
       --border-color: rgba(0, 0, 0, 0.1);
       --primary-text-color: #111;
       --secondary-text-color: #666;
-      --gold-start: #BF953F; --gold-end: #FCF6BA; --purple-accent: #8A2BE2;
+      --gold-start: #1d2b64; --gold-end: #3d52a0;
       --gold-gradient: linear-gradient(45deg, #1d2b64, #3d52a0);
       --gold-glow-color: rgba(61, 82, 160, 0.3);
       --shadow-color: rgba(0,0,0,0.1);
       --input-bg-color: rgba(0,0,0,0.03);
       --success-color: #00c853;
+      --error-color: #c0392b;
     }
 
     * { box-sizing: border-box; margin: 0; }
@@ -63,7 +65,7 @@
 
     .container {
       width: 100%; max-width: 1200px;
-      background: var(--surface-color); backdrop-filter: blur(25px);
+      background: var(--surface-color); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
       border: 1px solid var(--border-color); border-radius: var(--border-radius);
       padding: 2rem; box-shadow: 0 20px 60px var(--shadow-color);
     }
@@ -108,7 +110,9 @@
       resize: vertical;
     }
     .text-area:focus { border-color: var(--gold-start); box-shadow: 0 0 15px var(--gold-glow-color); }
-    .text-area.drag-over { border: 2px dashed var(--gold-start); }
+    .text-area.drag-over { border: 2px dashed var(--gold-start); box-shadow: 0 0 25px var(--gold-glow-color); }
+    
+    .error-message { color: var(--error-color); font-size: 0.9rem; margin-top: 0.5rem; min-height: 20px; text-align: left; }
 
     .icon-btn {
       background: transparent; color: var(--secondary-text-color);
@@ -129,7 +133,6 @@
       padding-top: 1.5rem;
       border-top: 1px solid var(--border-color);
     }
-
     .checkbox-group { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
     .checkbox-group input { display: none; }
     .checkbox-group .checkmark { width: 20px; height: 20px; border: 1px solid var(--border-color); border-radius: 4px; background: rgba(0,0,0,0.1); transition: all var(--transition-speed); position: relative; }
@@ -137,6 +140,8 @@
     .checkbox-group input:checked + .checkmark { background: var(--gold-gradient); border-color: transparent; }
     .checkbox-group input:checked + .checkmark::after { transform: translate(-50%, -50%) scale(1); }
     
+    #ad-container { margin-top: 1.5rem; display: flex; justify-content: center; align-items: center; }
+
     .toast {
       position: fixed;
       bottom: 2rem;
@@ -164,7 +169,7 @@
   <div class="container">
     <div class="header">
         <h1>Base64 Utility</h1>
-        <button class="icon-btn" id="theme-toggle" title="Switch Theme">
+        <button class="icon-btn" id="theme-toggle" title="Switch Theme" aria-label="Switch Theme">
             <svg id="theme-icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.25a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM7.5 12a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM18.894 6.106a.75.75 0 010 1.06l-1.591 1.59a.75.75 0 11-1.06-1.06l1.59-1.59a.75.75 0 011.06 0zM21.75 12a.75.75 0 01-.75.75h-2.25a.75.75 0 010-1.5H21a.75.75 0 01.75.75zM17.894 17.894a.75.75 0 01-1.06 0l-1.59-1.591a.75.75 0 111.06-1.06l1.59 1.59a.75.75 0 010 1.061zM12 18a.75.75 0 01.75.75v2.25a.75.75 0 01-1.5 0v-2.25A.75.75 0 0112 18zM5.106 17.894a.75.75 0 010-1.06l1.59-1.59a.75.75 0 011.06 1.06l-1.59 1.59a.75.75 0 01-1.06 0zM3 12a.75.75 0 01.75-.75h2.25a.75.75 0 010 1.5H3.75A.75.75 0 013 12zM6.106 6.106a.75.75 0 011.06 0l1.591 1.59a.75.75 0 01-1.06 1.06l-1.59-1.59a.75.75 0 010-1.06z"/></svg>
             <svg id="theme-icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path fill-rule="evenodd" d="M9.528 1.718a.75.75 0 01.162.819A8.97 8.97 0 009 6a9 9 0 009 9 8.97 8.97 0 004.463-.949a.75.75 0 01.819.162l.805.805a.75.75 0 01-.316 1.065A11.25 11.25 0 0112 21a11.25 11.25 0 01-11.25-11.25 11.25 11.25 0 019.282-11.242l.805.805z" clip-rule="evenodd" /></svg>
         </button>
@@ -173,38 +178,42 @@
     <div class="panels-container">
       <div class="panel">
         <div class="panel-header">
-          <h2>Text</h2>
+          <h2 id="text-panel-header">Text</h2>
           <div class="actions">
-            <button class="icon-btn" id="copy-text-btn" title="Copy Text"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.121A1.5 1.5 0 0117 6.621V16.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 16.5v-13z" /><path d="M5 6.5A1.5 1.5 0 016.5 5h3a.5.5 0 000-1h-3A2.5 2.5 0 004 6.5v10A2.5 2.5 0 006.5 19h7a2.5 2.5 0 002.5-2.5h-1A1.5 1.5 0 0113.5 18h-7A1.5 1.5 0 015 16.5v-10z" /></svg></button>
-            <button class="icon-btn" id="clear-text-btn" title="Clear Text"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-1.157.26-2.116.86-2.847 1.691a.75.75 0 001.06 1.06c.64-.64 1.44-1.121 2.387-1.3V12a.75.75 0 001.5 0V5.643c.947.179 1.747.66 2.387 1.3a.75.75 0 001.06-1.06A4.238 4.238 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 12.5a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z" clip-rule="evenodd" /><path d="M3 10a.75.75 0 01.75-.75h12.5a.75.75 0 010 1.5H3.75A.75.75 0 013 10z" /></svg></button>
+            <button class="icon-btn" id="copy-text-btn" title="Copy Text" aria-label="Copy Text"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.121A1.5 1.5 0 0117 6.621V16.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 16.5v-13z" /><path d="M5 6.5A1.5 1.5 0 016.5 5h3a.5.5 0 000-1h-3A2.5 2.5 0 004 6.5v10A2.5 2.5 0 006.5 19h7a2.5 2.5 0 002.5-2.5h-1A1.5 1.5 0 0113.5 18h-7A1.5 1.5 0 015 16.5v-10z" /></svg></button>
+            <button class="icon-btn" id="clear-text-btn" title="Clear Text" aria-label="Clear Text"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-1.157.26-2.116.86-2.847 1.691a.75.75 0 001.06 1.06c.64-.64 1.44-1.121 2.387-1.3V12a.75.75 0 001.5 0V5.643c.947.179 1.747.66 2.387 1.3a.75.75 0 001.06-1.06A4.238 4.238 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 12.5a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z" clip-rule="evenodd" /><path d="M3 10a.75.75 0 01.75-.75h12.5a.75.75 0 010 1.5H3.75A.75.75 0 013 10z" /></svg></button>
           </div>
         </div>
-        <textarea id="text-input" class="text-area" placeholder="Type text, or drop a file here..."></textarea>
+        <textarea id="text-input" class="text-area" placeholder="Type text, or drop a file here..." aria-labelledby="text-panel-header"></textarea>
+        <div class="error-message" id="text-error"></div>
       </div>
 
-      <button class="icon-btn swap-btn" id="swap-btn" title="Swap Panels">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2.5a.75.75 0 01.75.75v10.55l1.95-2.1a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 111.1-1.02l1.95 2.1V3.25A.75.75 0 0110 2.5z" clip-rule="evenodd" /><path d="M5.22 6.22a.75.75 0 011.06 0L8 7.94l1.72-1.72a.75.75 0 111.06 1.06L9.06 10l1.72 1.72a.75.75 0 11-1.06 1.06L8 11.06l-1.72 1.72a.75.75 0 01-1.06-1.06L6.94 10 5.22 8.28a.75.75 0 010-1.06z" /></svg>
+      <button class="icon-btn swap-btn" id="swap-btn" title="Swap Panels" aria-label="Swap Panels">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M15.904 4.032a.75.75 0 01.143 1.054l-2.5 3.5a.75.75 0 01-1.196-.858l1.29-1.805H5.75a.75.75 0 000 1.5h8.891l-1.29 1.805a.75.75 0 11-1.196.858l2.5 3.5a.75.75 0 01-.143 1.054A.75.75 0 0116.25 16h-6.5a.75.75 0 010-1.5h5.44l-1.95-2.73a.75.75 0 11.91-1.18l3.25 4.55a.75.75 0 010 .86l-3.25 4.55a.75.75 0 11-.91-1.18l1.95-2.73H9.75a.75.75 0 010-1.5h.001z" clip-rule="evenodd" transform="rotate(90 10 10)"/></svg>
       </button>
 
       <div class="panel">
         <div class="panel-header">
-          <h2>Base64</h2>
+          <h2 id="b64-panel-header">Base64</h2>
           <div class="actions">
-            <button class="icon-btn" id="copy-b64-btn" title="Copy Base64"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.121A1.5 1.5 0 0117 6.621V16.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 16.5v-13z" /><path d="M5 6.5A1.5 1.5 0 016.5 5h3a.5.5 0 000-1h-3A2.5 2.5 0 004 6.5v10A2.5 2.5 0 006.5 19h7a2.5 2.5 0 002.5-2.5h-1A1.5 1.5 0 0113.5 18h-7A1.5 1.5 0 015 16.5v-10z" /></svg></button>
-            <button class="icon-btn" id="clear-b64-btn" title="Clear Base64"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-1.157.26-2.116.86-2.847 1.691a.75.75 0 001.06 1.06c.64-.64 1.44-1.121 2.387-1.3V12a.75.75 0 001.5 0V5.643c.947.179 1.747.66 2.387 1.3a.75.75 0 001.06-1.06A4.238 4.238 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 12.5a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z" clip-rule="evenodd" /><path d="M3 10a.75.75 0 01.75-.75h12.5a.75.75 0 010 1.5H3.75A.75.75 0 013 10z" /></svg></button>
+            <button class="icon-btn" id="copy-b64-btn" title="Copy Base64" aria-label="Copy Base64"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3.5A1.5 1.5 0 018.5 2h3.879a1.5 1.5 0 011.06.44l3.122 3.121A1.5 1.5 0 0117 6.621V16.5a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 16.5v-13z" /><path d="M5 6.5A1.5 1.5 0 016.5 5h3a.5.5 0 000-1h-3A2.5 2.5 0 004 6.5v10A2.5 2.5 0 006.5 19h7a2.5 2.5 0 002.5-2.5h-1A1.5 1.5 0 0113.5 18h-7A1.5 1.5 0 015 16.5v-10z" /></svg></button>
+            <button class="icon-btn" id="clear-b64-btn" title="Clear Base64" aria-label="Clear Base64"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-1.157.26-2.116.86-2.847 1.691a.75.75 0 001.06 1.06c.64-.64 1.44-1.121 2.387-1.3V12a.75.75 0 001.5 0V5.643c.947.179 1.747.66 2.387 1.3a.75.75 0 001.06-1.06A4.238 4.238 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 12.5a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z" clip-rule="evenodd" /><path d="M3 10a.75.75 0 01.75-.75h12.5a.75.75 0 010 1.5H3.75A.75.75 0 013 10z" /></svg></button>
           </div>
         </div>
-        <textarea id="b64-input" class="text-area" placeholder="Base64 output appears here..."></textarea>
+        <textarea id="b64-input" class="text-area" placeholder="Base64 output appears here..." aria-labelledby="b64-panel-header"></textarea>
+        <div class="error-message" id="b64-error"></div>
       </div>
     </div>
     
     <div class="options-bar">
-      <label class="checkbox-group">
+      <label for="data-url-check" class="checkbox-group">
         <input type="checkbox" id="data-url-check">
         <span class="checkmark"></span>
         Include Data URL Prefix (for files)
       </label>
     </div>
+    <div id="ad-container">
+        </div>
   </div>
 
 <script>
@@ -214,6 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const swapBtn = document.getElementById('swap-btn');
     const dataUrlCheck = document.getElementById('data-url-check');
     const themeToggle = document.getElementById('theme-toggle');
+    const textError = document.getElementById('text-error');
+    const b64Error = document.getElementById('b64-error');
 
     const textEncoder = new TextEncoder();
     const textDecoder = new TextDecoder();
@@ -230,6 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const handleTextToB64 = () => {
         const text = textInput.value;
+        b64Error.textContent = '';
         if (!text) {
             b64Input.value = '';
             return;
@@ -237,26 +249,29 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const bytes = textEncoder.encode(text);
             b64Input.value = bytesToBase64(bytes);
-            b64Input.style.borderColor = '';
         } catch (e) {
-            b64Input.value = 'Error during encoding.';
-            b64Input.style.borderColor = 'red';
+            b64Input.value = '';
+            b64Error.textContent = 'Error during encoding.';
         }
     };
 
     const handleB64ToText = () => {
-        const base64 = b64Input.value.trim();
+        let base64 = b64Input.value.trim();
+        textError.textContent = '';
         if (!base64) {
             textInput.value = '';
             return;
         }
         try {
+            // Handle data URLs
+            if (base64.startsWith('data:')) {
+                base64 = base64.substring(base64.indexOf(',') + 1);
+            }
             const bytes = base64ToBytes(base64);
             textInput.value = textDecoder.decode(bytes);
-            textInput.style.borderColor = '';
         } catch (e) {
-            textInput.value = 'Invalid Base64 string.';
-            textInput.style.borderColor = 'red';
+            textInput.value = '';
+            textError.textContent = 'Invalid Base64 string.';
         }
     };
 
@@ -271,14 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
     textInput.addEventListener('input', debounce(handleTextToB64, 200));
     b64Input.addEventListener('input', debounce(handleB64ToText, 200));
 
-    // --- Button Actions ---
     swapBtn.addEventListener('click', () => {
         const temp = textInput.value;
         textInput.value = b64Input.value;
         b64Input.value = temp;
-
-        // BUG FIX: Manually trigger the conversion after swapping the values
         handleTextToB64();
+        handleB64ToText();
     });
 
     const setupButtonActions = (type) => {
@@ -307,15 +320,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = e.dataTransfer.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (readEvent) => {
-                let base64 = readEvent.target.result;
-                textInput.value = `File: ${file.name}\nType: ${file.type}\nSize: ${file.size} bytes`;
-                if (!dataUrlCheck.checked) {
-                    base64 = base64.substring(base64.indexOf(',') + 1);
-                }
-                b64Input.value = base64;
-            };
-            reader.readAsDataURL(file);
+            if (file.type.startsWith('text/')) {
+                reader.onload = (readEvent) => {
+                    textInput.value = readEvent.target.result;
+                    handleTextToB64();
+                };
+                reader.readAsText(file);
+            } else {
+                reader.onload = (readEvent) => {
+                    let base64 = readEvent.target.result;
+                    textInput.value = `File: ${file.name}\nType: ${file.type}\nSize: ${file.size} bytes`;
+                    if (!dataUrlCheck.checked) {
+                        base64 = base64.substring(base64.indexOf(',') + 1);
+                    }
+                    b64Input.value = base64;
+                };
+                reader.readAsDataURL(file);
+            }
         }
     });
 
@@ -345,6 +366,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     const savedTheme = localStorage.getItem('theme') || 'dark';
     setTheme(savedTheme);
+
+    // Add Ad Script dynamically
+    const adContainer = document.getElementById('ad-container');
+    const adScriptOptions = document.createElement('script');
+    adScriptOptions.type = 'text/javascript';
+    adScriptOptions.innerHTML = `
+        atOptions = {
+            'key' : 'aaa10b05ab727c7a2a4556625b4dcc37',
+            'format' : 'iframe',
+            'height' : 50,
+            'width' : 320,
+            'params' : {}
+        };
+    `;
+    const adScriptInvoke = document.createElement('script');
+    adScriptInvoke.type = 'text/javascript';
+    adScriptInvoke.src = '//www.highperformanceformat.com/aaa10b05ab727c7a2a4556625b4dcc37/invoke.js';
+    
+    adContainer.appendChild(adScriptOptions);
+    adContainer.appendChild(adScriptInvoke);
 });
 </script>
 
