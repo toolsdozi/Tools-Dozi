@@ -12,29 +12,31 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <style>
         :root {
-            --primary-gold: #E0C56E;
-            --dark-gold: #C9A84F;
+            --primary-gold: #FAD02C;
+            --dark-gold: #E0B828;
             --bg-dark: #0A0A0A;
             --surface-dark: #141414;
             --text-primary-light: #F5F5F7;
             --text-secondary-light: #A1A1A6;
-            --border-dark: rgba(224, 197, 110, 0.15);
+            --border-dark: rgba(250, 208, 44, 0.15);
             --white: #ffffff;
             --shadow-soft: 0 16px 48px rgba(0, 0, 0, 0.5);
-            --shadow-glow: 0 0 30px rgba(224, 197, 110, 0.15);
+            --shadow-glow: 0 0 40px rgba(250, 208, 44, 0.35);
             --rounded: 16px;
+            --transition-fast: all 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
             --transition-smooth: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes aurora {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; }
+        }
+        @keyframes mobileGlowPulse {
+            0%, 100% { box-shadow: none; border-color: var(--border-dark); }
+            50% { box-shadow: var(--shadow-glow); border-color: var(--primary-gold); }
         }
 
         html { scroll-behavior: smooth; }
-
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
         body {
@@ -46,13 +48,10 @@
             overflow-x: hidden;
             position: relative;
         }
-
         body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at 20% 20%, rgba(224, 197, 110, 0.08), transparent 40%),
-                        radial-gradient(circle at 80% 70%, rgba(224, 197, 110, 0.08), transparent 40%);
+            content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at 20% 20%, rgba(250, 208, 44, 0.07), transparent 40%),
+                        radial-gradient(circle at 80% 70%, rgba(250, 208, 44, 0.07), transparent 40%);
             animation: aurora 30s ease-in-out infinite;
             z-index: -1;
         }
@@ -60,24 +59,22 @@
         h1, h2, h3, h4, .logo, .footer-logo { font-family: 'Playfair Display', serif; font-weight: 700; letter-spacing: 0.5px; }
         .container { width: 90%; max-width: 1200px; margin: 0 auto; }
         
-        /* Header */
         header {
             background-color: rgba(20, 20, 20, 0.5);
             backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            position: sticky; top: 0; z-index: 1000;
-            padding: 24px 0; border-bottom: 1px solid var(--border-dark);
-            width: 100%; transition: var(--transition-smooth);
+            position: sticky; top: 0; z-index: 1000; padding: 24px 0; 
+            border-bottom: 1px solid var(--border-dark); width: 100%; 
+            transition: var(--transition-smooth);
         }
         header.scrolled { padding: 16px 0; background-color: rgba(20, 20, 20, 0.7); }
         .header-container { display: flex; justify-content: space-between; align-items: center; }
         .logo { font-size: 30px; color: var(--primary-gold); text-decoration: none; }
         .logo span { color: var(--text-primary-light); }
         nav ul { display: flex; list-style: none; gap: 50px; }
-        nav ul li a { position: relative; text-decoration: none; color: var(--text-primary-light); font-weight: 500; transition: var(--transition-smooth); }
+        nav ul li a { position: relative; text-decoration: none; color: var(--text-primary-light); font-weight: 500; transition: var(--transition-fast); }
         nav ul li a:hover { color: var(--primary-gold); transform: translateY(-2px); }
         .mobile-menu-btn { display: none; background: none; border: none; font-size: 24px; color: var(--primary-gold); cursor: pointer; z-index: 1001; }
         
-        /* Hero Section */
         .hero { padding: 140px 0; text-align: center; }
         .hero-content > * { opacity: 0; animation: fadeInUp 1s cubic-bezier(0.165, 0.84, 0.44, 1) forwards; }
         .hero-content h1 { animation-delay: 0.2s; }
@@ -86,16 +83,15 @@
         .hero-content .tool-icons { animation-delay: 0.8s; }
         .hero h1 { font-size: clamp(3.5rem, 8vw, 6rem); margin-bottom: 30px; line-height: 1.1; background: linear-gradient(120deg, var(--white), var(--primary-gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .hero p { font-size: clamp(1.1rem, 2.5vw, 1.3rem); max-width: 800px; margin: 0 auto 50px; color: var(--text-secondary-light); }
-        .cta-button { display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: var(--primary-gold); color: #000; padding: 20px 45px; border: none; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 1.1rem; margin-bottom: 80px; box-shadow: 0 10px 30px rgba(224, 197, 110, 0.2); transition: var(--transition-smooth); }
-        .cta-button:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 40px rgba(224, 197, 110, 0.3); }
+        .cta-button { display: inline-flex; align-items: center; justify-content: center; gap: 12px; background: var(--primary-gold); color: #000; padding: 20px 45px; border: none; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 1.1rem; margin-bottom: 80px; box-shadow: 0 10px 30px rgba(250, 208, 44, 0.2); transition: var(--transition-smooth); }
+        .cta-button:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 15px 40px rgba(250, 208, 44, 0.4); }
         .tool-icons { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; }
         .tool-icon { color: var(--text-secondary-light); text-decoration: none; transition: var(--transition-smooth); text-align: center; }
         .tool-icon-wrapper { width: 80px; height: 80px; border: 1px solid var(--border-dark); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; transition: var(--transition-smooth); margin-bottom: 10px; }
         .tool-icon span { font-size: 0.9rem; }
         .tool-icon:hover { color: var(--primary-gold); transform: translateY(-5px); }
-        .tool-icon:hover .tool-icon-wrapper { background: rgba(224, 197, 110, 0.1); border-color: var(--primary-gold); box-shadow: var(--shadow-glow);}
+        .tool-icon:hover .tool-icon-wrapper { background: rgba(250, 208, 44, 0.1); border-color: var(--primary-gold); box-shadow: var(--shadow-glow);}
         
-        /* Search Section */
         .search-section { padding: 80px 0; }
         .search-container { max-width: 800px; margin: auto; }
         .search-prompt { font-size: 1.8rem; text-align: center; margin-bottom: 30px; }
@@ -106,25 +102,30 @@
         .search-results { display: none; position: absolute; width: 100%; top: calc(100% + 10px); left: 0; background: var(--surface-dark); border: 1px solid var(--border-dark); border-radius: var(--rounded); box-shadow: var(--shadow-soft); z-index: 10; text-align: left; }
         .search-results ul { list-style: none; max-height: 300px; overflow-y: auto; padding: 0.5rem 0;}
         .search-results ul li a { display: block; padding: 15px 25px; color: var(--text-primary-light); text-decoration: none; transition: background-color 0.2s ease, color 0.2s ease; }
-        .search-results ul li a:hover { background: rgba(224, 197, 110, 0.1); color: var(--primary-gold); }
+        .search-results ul li a:hover { background: rgba(250, 208, 44, 0.1); color: var(--primary-gold); }
         
-        /* Tools Section */
-        .tools-section, .testimonial-section { padding: 100px 0; }
+        .tools-section, .testimonial-section, .trusted-by-section { padding: 100px 0; }
         .section-header { text-align: center; margin-bottom: 80px; }
-        .section-header h2 { font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 25px; }
+        .section-header h2 { font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 25px; transition: color 0.3s ease; }
+        .section-header h2:hover { color: var(--primary-gold); }
         .section-header p { color: var(--text-secondary-light); max-width: 700px; margin: 0 auto; font-size: 1.1rem; }
         
         .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 40px; }
         .tool-card { background: linear-gradient(145deg, var(--surface-dark), #101010); border-radius: var(--rounded); padding: 40px; border: 1px solid var(--border-dark); position: relative; overflow: hidden; opacity: 0; transform: translateY(40px); transition: var(--transition-smooth); transform-style: preserve-3d; }
-        .tool-card:hover { transform: translateY(-12px) perspective(1000px) rotateX(5deg) rotateY(-5deg); box-shadow: var(--shadow-soft); border-color: var(--primary-gold); }
+        .tool-card:hover { transform: translateY(-12px) perspective(1000px) rotateX(5deg) rotateY(-5deg); box-shadow: var(--shadow-glow); border-color: var(--primary-gold); }
         .tool-card.visible { animation: fadeInUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards; }
         .tool-icon-container { width: 60px; height: 60px; background-image: linear-gradient(145deg, var(--dark-gold), var(--primary-gold)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 30px; color: var(--bg-dark); font-size: 26px; }
         .tool-card h3 { font-size: 1.6rem; margin-bottom: 15px; }
         .tool-card p { color: var(--text-secondary-light); font-size: 1rem; margin-bottom: 30px; }
-        .tool-button { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--primary-gold); border: 1px solid var(--primary-gold); padding: 12px 28px; border-radius: 50px; text-decoration: none; font-size: 1rem; font-weight: 500; transition: var(--transition-smooth); }
-        .tool-button:hover { background: var(--primary-gold); color: #000; box-shadow: 0 0 20px rgba(224, 197, 110, 0.3);}
+        .tool-button { display: inline-flex; align-items: center; gap: 8px; background: transparent; color: var(--primary-gold); border: 1px solid var(--primary-gold); padding: 12px 28px; border-radius: 50px; text-decoration: none; font-size: 1rem; font-weight: 500; transition: var(--transition-fast); }
+        .tool-button:hover { background: var(--primary-gold); color: #000; box-shadow: var(--shadow-glow);}
 
-        /* Testimonial Section */
+        .trusted-by-section { padding-top: 0; }
+        .trusted-by-title { text-align: center; font-size: 1rem; color: var(--text-secondary-light); margin-bottom: 40px; letter-spacing: 1px; text-transform: uppercase; }
+        .logos-container { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 60px; }
+        .logos-container i { font-size: 2.5rem; color: var(--text-secondary-light); opacity: 0.6; transition: var(--transition-fast); }
+        .logos-container i:hover { color: var(--white); opacity: 1; transform: scale(1.1); }
+
         .testimonial-section { background: var(--surface-dark); }
         .swiper-slide { background: transparent; border: 1px solid var(--border-dark); border-radius: var(--rounded); padding: 40px; text-align: center; width: 400px; }
         .swiper-slide p { font-size: 1.1rem; font-style: italic; margin-bottom: 30px; }
@@ -132,19 +133,17 @@
         .star-rating { font-size: 1.2rem; color: var(--primary-gold); }
         .testimonial-user h4 { font-family: 'Inter', sans-serif; font-weight: 500; font-size: 1.1rem; }
         
-        /* Footer */
         footer { padding: 100px 0 50px; text-align: center; }
         .footer-logo { font-size: 32px; color: var(--primary-gold); margin-bottom: 25px; display: block; text-decoration: none; }
         .footer-logo span { color: var(--text-primary-light); }
         .footer-links { list-style: none; display: flex; justify-content: center; gap: 40px; margin-bottom: 30px; padding: 0;}
-        .footer-links a { color: var(--text-secondary-light); text-decoration: none; transition: var(--transition-smooth); }
+        .footer-links a { color: var(--text-secondary-light); text-decoration: none; transition: var(--transition-fast); }
         .footer-links a:hover { color: var(--primary-gold); }
         .social-links { display: flex; justify-content: center; gap: 30px; margin-bottom: 40px; }
-        .social-links a { color: var(--text-secondary-light); font-size: 1.5rem; transition: var(--transition-smooth); }
+        .social-links a { color: var(--text-secondary-light); font-size: 1.5rem; transition: var(--transition-fast); }
         .social-links a:hover { color: var(--primary-gold); transform: translateY(-5px); }
         .footer-bottom { font-size: 0.9rem; opacity: 0.7; }
         
-        /* Responsive */
         @media (max-width: 768px) {
             .tools-grid { grid-template-columns: 1fr; }
             .hero { padding: 100px 0; }
@@ -154,6 +153,10 @@
             nav ul { flex-direction: column; align-items: center; width: 100%; gap: 20px; }
             nav ul li a { font-size: 1.5rem; }
             .mobile-menu-btn { display: block; }
+            .tool-card.visible {
+                animation: fadeInUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards,
+                           mobileGlowPulse 1.2s ease-out 0.5s forwards;
+            }
         }
     </style>
 </head>
@@ -214,6 +217,19 @@
             </div>
         
     </main>
+
+    <section class="trusted-by-section">
+        <div class="container">
+            <h2 class="trusted-by-title">Trusted by Professionals at</h2>
+            <div class="logos-container">
+                <i class="fab fa-google" title="Google"></i>
+                <i class="fab fa-microsoft" title="Microsoft"></i>
+                <i class="fab fa-adobe" title="Adobe"></i>
+                <i class="fab fa-spotify" title="Spotify"></i>
+                <i class="fab fa-dropbox" title="Dropbox"></i>
+            </div>
+        </div>
+    </section>
 
     <section class="testimonial-section" id="testimonials">
         <div class="container">
@@ -322,34 +338,7 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        
-        // --- Header Scroll Effect ---
-        const header = document.getElementById('mainHeader');
-        window.addEventListener('scroll', () => {
-            header.classList.toggle('scrolled', window.scrollY > 80);
-        });
-
-        // Mobile Menu
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const mainNav = document.getElementById('mainNav');
-        mobileMenuBtn.addEventListener('click', () => mainNav.classList.toggle('active'));
-
-        // --- Swiper Slider Initialization ---
-        const swiper = new Swiper('.testimonial-slider', {
-            effect: 'slide',
-            grabCursor: true,
-            centeredSlides: true,
-            loop: true,
-            slidesPerView: 'auto',
-            spaceBetween: 40,
-            autoplay: {
-                delay: 3000,
-                disableOnInteraction: false,
-            },
-            keyboard: { enabled: true },
-        });
-
-        // --- ALL TOOLS DATA IS NOW RESTORED ---
+        // --- ALL TOOLS DATA ---
         const allToolsData = {
             "Image Tools": { description: "A collection of our finest image tools to streamline your workflow.", tools: [ { icon: "fas fa-exchange-alt", name: "Image Converter", desc: "Convert between JPG, PNG, GIF, WEBP and more formats", link: "Image-Converter.html" }, { icon: "fas fa-compress-alt", name: "Image Compressor", desc: "Reduce image file size without losing quality", link: "Image-Compressor.html" }, { icon: "fas fa-expand-alt", name: "Image Resizer", desc: "Resize images to any dimension while maintaining aspect ratio", link: "Image-Resizer.html" }, { icon: "fas fa-crop-alt", name: "Image Cropper", desc: "Crop images to remove unwanted areas or focus on specific parts", link: "Image-Crop.html" }, { icon: "fas fa-font", name: "Image to Text (OCR)", desc: "Extract text from images with optical character recognition", link: "Image-To-Text.html" }, { icon: "fas fa-sync-alt", name: "Image Rotator/Flipper", desc: "Rotate or flip images horizontally/vertically", link: "Image-Rotator.html" } ] },
             "Document Tools": { description: "A collection of our finest document tools to streamline your workflow.", tools: [ { icon: "fas fa-file-pdf", name: "PDF to Word / Word to PDF", desc: "Convert between PDF and Word documents seamlessly", link: "PDF-To-Word.html" }, { icon: "fas fa-file-archive", name: "PDF Compressor", desc: "Reduce PDF file size while maintaining quality", link: "PDF-Compressor.html" }, { icon: "fas fa-cut", name: "PDF Merger & Splitter", desc: "Combine multiple PDFs or split pages from a PDF", link: "PDF-Merger.html" }, { icon: "fas fa-exchange-alt", name: "Document Converter", desc: "Convert between various document formats", link: "Document-Converter.html" }, { icon: "fas fa-lock", name: "PDF Lock/Unlock", desc: "Add or remove passwords from PDF files", link: "PDF-Lock.html" }, { icon: "fas fa-signature", name: "eSign PDF", desc: "Add digital signatures to your PDF documents", link: "E-Sign-PDF.html" } ] },
@@ -389,7 +378,67 @@
             toolsContainer.appendChild(section);
         }
         
-        // --- Intersection Observer for Animations (MUST RUN AFTER cards are created) ---
+        const swiper = new Swiper('.testimonial-slider', {
+            effect: 'slide',
+            grabCursor: true,
+            centeredSlides: true,
+            loop: true,
+            slidesPerView: 'auto',
+            spaceBetween: 40,
+            autoplay: {
+                delay: 3000,
+                disableOnInteraction: false,
+            },
+            keyboard: { enabled: true },
+        });
+
+        const header = document.getElementById('mainHeader');
+        window.addEventListener('scroll', () => { header.classList.toggle('scrolled', window.scrollY > 80); });
+        
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mainNav = document.getElementById('mainNav');
+        mobileMenuBtn.addEventListener('click', () => mainNav.classList.toggle('active'));
+        
+        const searchInput = document.getElementById('searchInput');
+        const resultsContainer = document.getElementById('searchResults');
+        const resultsList = resultsContainer.querySelector('ul');
+        function performSearch() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            resultsList.innerHTML = '';
+            if (!searchTerm) { resultsContainer.style.display = 'none'; return; }
+            const allCardsData = [];
+            document.querySelectorAll('.tool-card').forEach(card => {
+                allCardsData.push({
+                    name: card.querySelector('h3').textContent,
+                    desc: card.querySelector('p').textContent.toLowerCase(),
+                    element: card
+                });
+            });
+            const foundResults = allCardsData.filter(item => item.name.toLowerCase().includes(searchTerm) || item.desc.includes(searchTerm));
+            if (foundResults.length > 0) {
+                foundResults.forEach(result => {
+                    const listItem = document.createElement('li');
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.textContent = result.name;
+                    link.onclick = (e) => {
+                        e.preventDefault();
+                        result.element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        resultsContainer.style.display = 'none';
+                        searchInput.value = '';
+                    };
+                    listItem.appendChild(link);
+                    resultsList.appendChild(listItem);
+                });
+                resultsContainer.style.display = 'block';
+            } else {
+                resultsList.innerHTML = '<li>No tools found.</li>';
+                resultsContainer.style.display = 'block';
+            }
+        }
+        searchInput.addEventListener('input', performSearch);
+        document.addEventListener('click', (event) => { if (!event.target.closest('.search-container')) { resultsContainer.style.display = 'none'; } });
+
         const animatedElements = document.querySelectorAll('.tool-card');
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -402,7 +451,7 @@
         animatedElements.forEach(el => observer.observe(el));
     });
     </script>
-
+    
     <script async="async" data-cfasync="false" src="//pl27486986.profitableratecpm.com/3acc63ad9676ddc726393950905878fe/invoke.js"></script>
     <div id="container-3acc63ad9676ddc726393950905878fe"></div>
 
