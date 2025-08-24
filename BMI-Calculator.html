@@ -14,6 +14,7 @@
       --background-start: #0F0C29; --background-mid: #302B63; --background-end: #24243E;
       --surface-color: rgba(26, 26, 42, 0.85); --text-color: #E0E0E0; --text-muted-color: #A0A0A0;
       --border-color: rgba(255, 215, 0, 0.2);
+      --error-color: #FF5252;
       --c-underweight: #3498db; --c-normal: #2ecc71; --c-overweight: #f1c40f; --c-obese: #e74c3c;
       --border-radius: 16px; --box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
@@ -22,7 +23,7 @@
       margin: 0; font-family: 'Inter', sans-serif; color: var(--text-color);
       background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
       background-size: 400% 400%; animation: gradientBG 20s ease infinite;
-      display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+      display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
     }
     @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
     
@@ -46,24 +47,45 @@
     .unit-toggle button {
         background: transparent; border: none; color: var(--text-muted-color);
         padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;
-        font-size: 0.9rem; font-weight: bold; flex: 1;
+        font-size: 0.9rem; font-weight: bold; flex: 1; transition: all 0.3s ease;
     }
     .unit-toggle button.active { background: #FDBB2D; color: #111; }
 
-    .input-fields { display: flex; flex-direction: column; gap: 1rem; }
+    .input-fields { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;}
     .input-group { display: flex; gap: 1rem; }
+    .input-wrapper { display: flex; flex-direction: column; width: 100%; }
+    .input-wrapper label { display: none; } /* Visually hidden but accessible */
     input[type="number"] {
         width: 100%; padding: 0.85rem; font-size: 1rem;
         border: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2);
-        color: var(--text-color); border-radius: 8px;
+        color: var(--text-color); border-radius: 8px; transition: all 0.3s ease;
+    }
+    input[type="number"]:focus {
+        border-color: var(--primary-gold);
+        box-shadow: 0 0 15px rgba(253, 187, 45, 0.3);
     }
     input[type="number"]::placeholder { color: var(--text-muted-color); }
     
-    .result-container {
-      margin-top: 2rem; opacity: 0;
-      transition: opacity 0.5s ease;
+    .error-message {
+        color: var(--error-color); font-size: 0.9rem; text-align: center;
+        margin-top: -1rem; margin-bottom: 1rem; height: 1rem; opacity: 0;
+        transition: opacity 0.3s ease;
     }
-    .result-container.visible { opacity: 1; }
+    .error-message.visible { opacity: 1; }
+
+    .calculate-btn {
+        background: var(--primary-gradient); color: #111; border: none; padding: 1rem;
+        width: 100%; border-radius: 8px; font-size: 1.1rem; font-weight: 700;
+        cursor: pointer; transition: all 0.3s ease;
+    }
+    .calculate-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); }
+
+    .result-container {
+      margin-top: 2rem; opacity: 0; transform: translateY(20px);
+      max-height: 0; overflow: hidden;
+      transition: opacity 0.5s ease, transform 0.5s ease, max-height 0.5s ease;
+    }
+    .result-container.visible { opacity: 1; transform: translateY(0); max-height: 500px; }
 
     #result-value { font-size: 3rem; font-weight: 700; font-family: 'Roboto Mono', monospace; }
     #result-category { font-size: 1.2rem; font-weight: 500; margin-top: -10px; margin-bottom: 2rem; transition: color 0.5s ease; }
@@ -74,10 +96,10 @@
         position: relative; margin-bottom: 10px;
     }
     .gauge-section { height: 100%; }
-    .gauge-underweight { background-color: var(--c-underweight); width: 21.25%; } /* BMI < 18.5 -> (18.5-10)/40 */
-    .gauge-normal { background-color: var(--c-normal); width: 16%; } /* 18.5-24.9 -> (24.9-18.5)/40 */
-    .gauge-overweight { background-color: var(--c-overweight); width: 12.5%; } /* 24.9-29.9 */
-    .gauge-obese { background-color: var(--c-obese); width: 50.25%; } /* 29.9+ */
+    .gauge-underweight { background-color: var(--c-underweight); width: 21.25%; }
+    .gauge-normal { background-color: var(--c-normal); width: 16%; }
+    .gauge-overweight { background-color: var(--c-overweight); width: 12.5%; }
+    .gauge-obese { background-color: var(--c-obese); width: 50.25%; }
     
     #gauge-marker {
         width: 4px; height: 28px; background-color: #fff;
@@ -95,8 +117,19 @@
     }
     #healthy-range p { margin: 0; color: var(--text-muted-color); font-size: 0.9rem;}
     #healthy-range span { font-weight: 600; font-family: 'Roboto Mono', monospace; }
-
     .hidden { display: none; }
+    
+    #ad-container {
+        width: 100%;
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    @media (max-width: 400px) {
+        .input-group { flex-direction: column; }
+    }
   </style>
 </head>
 <body>
@@ -111,17 +144,34 @@
 
     <div class="input-fields">
         <div id="metric-inputs">
-            <input type="number" id="weight-kg" placeholder="Enter your weight (kg)" />
-            <input type="number" id="height-cm" placeholder="Enter your height (cm)" />
+            <div class="input-wrapper">
+                <label for="weight-kg">Weight in KG</label>
+                <input type="number" id="weight-kg" placeholder="Enter your weight (kg)" />
+            </div>
+            <div class="input-wrapper">
+                <label for="height-cm">Height in CM</label>
+                <input type="number" id="height-cm" placeholder="Enter your height (cm)" />
+            </div>
         </div>
         <div id="imperial-inputs" class="hidden">
-            <input type="number" id="weight-lbs" placeholder="Enter your weight (lbs)" />
+            <div class="input-wrapper">
+                <label for="weight-lbs">Weight in LBS</label>
+                <input type="number" id="weight-lbs" placeholder="Enter your weight (lbs)" />
+            </div>
             <div class="input-group">
-                <input type="number" id="height-ft" placeholder="Height (ft)" />
-                <input type="number" id="height-in" placeholder="Height (in)" />
+                <div class="input-wrapper">
+                    <label for="height-ft">Height in Feet</label>
+                    <input type="number" id="height-ft" placeholder="Height (ft)" />
+                </div>
+                <div class="input-wrapper">
+                    <label for="height-in">Height in Inches</label>
+                    <input type="number" id="height-in" placeholder="Height (in)" />
+                </div>
             </div>
         </div>
     </div>
+    <div id="errorMessage" class="error-message"></div>
+    <button id="calculate-btn" class="calculate-btn">Calculate BMI</button>
     
     <div id="result-container" class="result-container">
         <p id="result-value">--</p>
@@ -143,104 +193,142 @@
     </div>
   </div>
 
+  <div id="ad-container">
+    <script type="text/javascript">
+        atOptions = {
+            'key' : 'aaa10b05ab727c7a2a4556625b4dcc37',
+            'format' : 'iframe',
+            'height' : 50,
+            'width' : 320,
+            'params' : {}
+        };
+    </script>
+    <script type="text/javascript" src="//www.highperformanceformat.com/aaa10b05ab727c7a2a4556625b4dcc37/invoke.js"></script>
+  </div>
+
   <script>
-    const metricBtn = document.getElementById('metric-btn');
-    const imperialBtn = document.getElementById('imperial-btn');
-    const metricInputs = document.getElementById('metric-inputs');
-    const imperialInputs = document.getElementById('imperial-inputs');
-    const resultContainer = document.getElementById('result-container');
-    const resultValueEl = document.getElementById('result-value');
-    const resultCategoryEl = document.getElementById('result-category');
-    const gaugeMarker = document.getElementById('gauge-marker');
-    const rangeTextEl = document.getElementById('range-text');
+    document.addEventListener('DOMContentLoaded', () => {
+        const metricBtn = document.getElementById('metric-btn');
+        const imperialBtn = document.getElementById('imperial-btn');
+        const calculateBtn = document.getElementById('calculate-btn');
 
-    const inputs = document.querySelectorAll('input[type="number"]');
-    let currentUnit = 'metric';
+        const metricInputs = document.getElementById('metric-inputs');
+        const imperialInputs = document.getElementById('imperial-inputs');
+        
+        const resultContainer = document.getElementById('result-container');
+        const resultValueEl = document.getElementById('result-value');
+        const resultCategoryEl = document.getElementById('result-category');
+        const gaugeMarker = document.getElementById('gauge-marker');
+        const rangeTextEl = document.getElementById('range-text');
+        const errorMessageEl = document.getElementById('errorMessage');
 
-    metricBtn.addEventListener('click', () => switchUnit('metric'));
-    imperialBtn.addEventListener('click', () => switchUnit('imperial'));
-    inputs.forEach(input => input.addEventListener('input', calculateBMI));
+        let currentUnit = 'metric';
 
-    function switchUnit(unit) {
-        currentUnit = unit;
-        metricBtn.classList.toggle('active', unit === 'metric');
-        imperialBtn.classList.toggle('active', unit === 'imperial');
-        metricInputs.classList.toggle('hidden', unit !== 'metric');
-        imperialInputs.classList.toggle('hidden', unit === 'metric');
-        calculateBMI();
-    }
+        metricBtn.addEventListener('click', () => switchUnit('metric'));
+        imperialBtn.addEventListener('click', () => switchUnit('imperial'));
+        calculateBtn.addEventListener('click', calculateBMI);
 
-    function calculateBMI() {
-        let weight, height;
-
-        if (currentUnit === 'metric') {
-            weight = parseFloat(document.getElementById('weight-kg').value);
-            height = parseFloat(document.getElementById('height-cm').value);
-        } else {
-            const weightLbs = parseFloat(document.getElementById('weight-lbs').value);
-            const heightFt = parseFloat(document.getElementById('height-ft').value) || 0;
-            const heightIn = parseFloat(document.getElementById('height-in').value) || 0;
-            if (weightLbs) weight = weightLbs * 0.453592; // lbs to kg
-            if (heightFt || heightIn) height = (heightFt * 12 + heightIn) * 2.54; // ft+in to cm
-        }
-
-        if (!weight || !height || weight <= 0 || height <= 0) {
+        function switchUnit(unit) {
+            currentUnit = unit;
+            metricBtn.classList.toggle('active', unit === 'metric');
+            imperialBtn.classList.toggle('active', unit === 'imperial');
+            metricInputs.classList.toggle('hidden', unit !== 'metric');
+            imperialInputs.classList.toggle('hidden', unit === 'metric');
+            
+            // Clear inputs and results on unit switch
+            document.getElementById('weight-kg').value = '';
+            document.getElementById('height-cm').value = '';
+            document.getElementById('weight-lbs').value = '';
+            document.getElementById('height-ft').value = '';
+            document.getElementById('height-in').value = '';
             resultContainer.classList.remove('visible');
-            return;
+            clearError();
         }
 
-        const heightInMeters = height / 100;
-        const bmi = weight / (heightInMeters * heightInMeters);
-        
-        updateDisplay(bmi, heightInMeters);
-    }
-    
-    function updateDisplay(bmi, heightInMeters) {
-        const roundedBMI = bmi.toFixed(1);
-        resultValueEl.textContent = roundedBMI;
+        function displayError(message) {
+            errorMessageEl.textContent = message;
+            errorMessageEl.classList.add('visible');
+            resultContainer.classList.remove('visible');
+        }
 
-        let category = "", color = "";
-        if (bmi < 18.5) { category = "Underweight"; color = 'var(--c-underweight)'; }
-        else if (bmi < 25) { category = "Normal weight"; color = 'var(--c-normal)'; }
-        else if (bmi < 30) { category = "Overweight"; color = 'var(--c-overweight)'; }
-        else { category = "Obesity"; color = 'var(--c-obese)'; }
-        
-        resultCategoryEl.textContent = category;
-        resultCategoryEl.style.color = color;
-        
-        // Update gauge marker position
-        // Scale: gauge visually represents BMI 15 to 40
-        const minBmi = 15, maxBmi = 40;
-        let percent = ((bmi - minBmi) / (maxBmi - minBmi)) * 100;
-        percent = Math.max(0, Math.min(100, percent)); // Clamp between 0% and 100%
-        gaugeMarker.style.left = `${percent}%`;
+        function clearError() {
+            errorMessageEl.textContent = '';
+            errorMessageEl.classList.remove('visible');
+        }
 
-        // Calculate and display healthy weight range
-        const lowerBmi = 18.5;
-        const upperBmi = 24.9;
-        let lowerWeight = lowerBmi * heightInMeters * heightInMeters;
-        let upperWeight = upperBmi * heightInMeters * heightInMeters;
-        
-        if (currentUnit === 'imperial') {
-            lowerWeight *= 2.20462; // kg to lbs
-            upperWeight *= 2.20462;
-            rangeTextEl.textContent = `${lowerWeight.toFixed(1)} lbs - ${upperWeight.toFixed(1)} lbs`;
-        } else {
-            rangeTextEl.textContent = `${lowerWeight.toFixed(1)} kg - ${upperWeight.toFixed(1)} kg`;
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentValue = progress * (end - start) + start;
+                element.textContent = currentValue.toFixed(1);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function calculateBMI() {
+            clearError();
+            let weight, height;
+
+            if (currentUnit === 'metric') {
+                weight = parseFloat(document.getElementById('weight-kg').value);
+                height = parseFloat(document.getElementById('height-cm').value);
+            } else {
+                const weightLbs = parseFloat(document.getElementById('weight-lbs').value);
+                const heightFt = parseFloat(document.getElementById('height-ft').value) || 0;
+                const heightIn = parseFloat(document.getElementById('height-in').value) || 0;
+                if (weightLbs) weight = weightLbs * 0.453592; // lbs to kg
+                if (heightFt || heightIn) height = (heightFt * 12 + heightIn) * 2.54; // ft+in to cm
+            }
+
+            if (!weight || !height || weight <= 0 || height <= 0) {
+                displayError("Please enter a valid weight and height.");
+                return;
+            }
+
+            const heightInMeters = height / 100;
+            const bmi = weight / (heightInMeters * heightInMeters);
+            
+            updateDisplay(bmi, heightInMeters);
         }
         
-        resultContainer.classList.add('visible');
-    }
+        function updateDisplay(bmi, heightInMeters) {
+            let category = "", color = "";
+            if (bmi < 18.5) { category = "Underweight"; color = 'var(--c-underweight)'; }
+            else if (bmi < 25) { category = "Normal weight"; color = 'var(--c-normal)'; }
+            else if (bmi < 30) { category = "Overweight"; color = 'var(--c-overweight)'; }
+            else { category = "Obesity"; color = 'var(--c-obese)'; }
+            
+            resultCategoryEl.textContent = category;
+            resultCategoryEl.style.color = color;
+            
+            animateValue(resultValueEl, 0, bmi, 1000);
+            
+            const minBmi = 15, maxBmi = 40;
+            let percent = ((bmi - minBmi) / (maxBmi - minBmi)) * 100;
+            percent = Math.max(0, Math.min(100, percent));
+            gaugeMarker.style.left = `${percent}%`;
+
+            const lowerBmi = 18.5;
+            const upperBmi = 24.9;
+            let lowerWeight = lowerBmi * heightInMeters * heightInMeters;
+            let upperWeight = upperBmi * heightInMeters * heightInMeters;
+            
+            if (currentUnit === 'imperial') {
+                lowerWeight *= 2.20462;
+                upperWeight *= 2.20462;
+                rangeTextEl.textContent = `${lowerWeight.toFixed(1)} lbs - ${upperWeight.toFixed(1)} lbs`;
+            } else {
+                rangeTextEl.textContent = `${lowerWeight.toFixed(1)} kg - ${upperWeight.toFixed(1)} kg`;
+            }
+            
+            resultContainer.classList.add('visible');
+        }
+    });
   </script>
-<script type="text/javascript">
-	atOptions = {
-		'key' : 'aaa10b05ab727c7a2a4556625b4dcc37',
-		'format' : 'iframe',
-		'height' : 50,
-		'width' : 320,
-		'params' : {}
-	};
-</script>
-<script type="text/javascript" src="//www.highperformanceformat.com/aaa10b05ab727c7a2a4556625b4dcc37/invoke.js"></script>
 </body>
 </html>
