@@ -21,7 +21,8 @@
       margin: 0; font-family: 'Inter', sans-serif; color: var(--text-color);
       background: linear-gradient(-45deg, var(--background-start), var(--background-mid), var(--background-end), var(--background-start));
       background-size: 400% 400%; animation: gradientBG 20s ease infinite;
-      display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
+      display: flex; flex-direction: column; /* Changed for ad container */ 
+      justify-content: center; align-items: center; min-height: 100vh; padding: 1rem;
     }
     @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
     
@@ -41,6 +42,12 @@
     }
     
     .controls { max-height: 600px; overflow-y: auto; padding-right: 15px; }
+    /* Custom Scrollbar */
+    .controls::-webkit-scrollbar { width: 8px; }
+    .controls::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+    .controls::-webkit-scrollbar-thumb { background: #FDBB2D; border-radius: 4px; }
+    .controls::-webkit-scrollbar-thumb:hover { background: #D4AF37; }
+
 
     .input-group { margin-bottom: 1.5rem; }
     .input-group label { display: block; margin-bottom: 0.5rem; color: var(--text-muted-color); font-weight: 500;}
@@ -49,10 +56,10 @@
         border: 1px solid var(--border-color); background-color: rgba(0,0,0,0.2);
         color: var(--text-color); border-radius: 8px; font-family: 'Inter', sans-serif;
     }
-    #validation-message { color: var(--error-color); font-size: 0.9rem; margin-top: 0.5rem; min-height: 20px; }
+    #validation-message { color: var(--error-color); font-size: 0.9rem; margin-top: 0.5rem; min-height: 20px; text-align: left;}
     .row { display: flex; gap: 1rem; }
     .row > .input-group { flex: 1; }
-    input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; border-radius: 8px; cursor: pointer; }
+    input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; border-radius: 8px; cursor: pointer; background-color: transparent; }
     input[type="range"] { width: 100%; }
 
     .switch-container { display: flex; justify-content: space-between; align-items: center; }
@@ -60,7 +67,7 @@
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.3); transition: .4s; border-radius: 28px; }
     .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-    input:checked + .slider { background: var(--primary-gradient); }
+    input:checked + .slider { background-image: var(--primary-gradient); }
     input:checked + .slider:before { transform: translateX(22px); }
 
     .preview { display: flex; flex-direction: column; justify-content: center; align-items: center; }
@@ -68,14 +75,25 @@
         width: 100%; min-height: 150px;
         background: #fff; padding: 20px; border-radius: 12px;
         display: flex; justify-content: center; align-items: center;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.5rem; transition: box-shadow 0.3s ease;
+    }
+    #barcode-container.invalid {
+        box-shadow: 0 0 15px var(--error-color);
     }
     
-    .download-options { display: flex; gap: 1rem; align-items: center; margin-top: 1.5rem; }
-    .button { background: var(--primary-gradient); color: #111; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; }
-    .button:disabled { background: #555; cursor: not-allowed; color: #888; }
+    .download-options { display: flex; gap: 1rem; align-items: center; width: 100%; }
+    .download-options select { max-width: 100px; }
     
-    @media (max-width: 768px) { .container { flex-direction: column; } .controls { max-height: none; } }
+    .button { background: var(--primary-gradient); color: #111; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; flex-grow: 1; }
+    .button:disabled { background: #555; cursor: not-allowed; color: #888; transform: none; box-shadow: none; }
+    .button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4); }
+    
+    #ad-container { width: 100%; margin-top: 2rem; display: flex; justify-content: center; align-items: center; }
+
+    @media (max-width: 768px) { 
+        .container { flex-direction: column; } 
+        .controls { max-height: none; padding-right: 5px; } 
+    }
   </style>
 </head>
 <body>
@@ -100,17 +118,21 @@
                 <option value="MSI">MSI</option>
             </select>
         </div>
-        <hr style="border-color: var(--border-color); margin: 2rem 0;">
+
+        <button id="generateBtn" class="button" style="width: 100%; margin-bottom: 2rem;">Generate Barcode</button>
+
+        <hr style="border-color: var(--border-color); margin: 0 0 2rem 0;">
+
         <div class="row">
             <div class="input-group"><label for="lineColor">Line Color</label><input type="color" id="lineColor" value="#000000"></div>
             <div class="input-group"><label for="bgColor">Background Color</label><input type="color" id="bgColor" value="#FFFFFF"></div>
         </div>
         <div class="row">
-            <div class="input-group"><label for="barWidth">Bar Width</label><input type="range" id="barWidth" min="1" max="4" step="0.5" value="2"></div>
-            <div class="input-group"><label for="barHeight">Bar Height</label><input type="range" id="barHeight" min="20" max="150" step="5" value="100"></div>
+            <div class="input-group"><label for="barWidth">Bar Width (1-4)</label><input type="range" id="barWidth" min="1" max="4" step="0.5" value="2"></div>
+            <div class="input-group"><label for="barHeight">Bar Height (20-150)</label><input type="range" id="barHeight" min="20" max="150" step="5" value="100"></div>
         </div>
         <div class="input-group switch-container">
-            <label for="displayValue">Show Text</label>
+            <label for="displayValue">Show Text with Barcode</label>
             <label class="switch"><input type="checkbox" id="displayValue" checked><span class="slider"></span></label>
         </div>
     </div>
@@ -120,119 +142,174 @@
         </div>
         <div class="download-options">
             <button id="downloadBtn" class="button" disabled>Download</button>
-            <select id="download-format"><option value="svg">SVG</option><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
+            <select id="downloadFormat"><option value="svg">SVG</option><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
         </div>
     </div>
   </div>
 
+  <div id="ad-container">
+    <script type="text/javascript">
+        atOptions = {
+            'key' : '0006ed1a6f2f3126b68ccfbff26cce6a', /* Replace with your ad key */
+            'format' : 'iframe',
+            'height' : 300,
+            'width' : 160,
+            'params' : {}
+        };
+    </script>
+    <script type="text/javascript" src="//www.highperformanceformat.com/0006ed1a6f2f3126b68ccfbff26cce6a/invoke.js"></script>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script>
-    const textInput = document.getElementById("barcodeText");
-    const formatSelect = document.getElementById("barcodeFormat");
-    const validationMessage = document.getElementById("validation-message");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const allInputs = document.querySelectorAll('.controls input, .controls select');
+    document.addEventListener('DOMContentLoaded', () => {
+        const textInput = document.getElementById("barcodeText");
+        const formatSelect = document.getElementById("barcodeFormat");
+        const validationMessage = document.getElementById("validation-message");
+        const generateBtn = document.getElementById("generateBtn");
+        const downloadBtn = document.getElementById("downloadBtn");
+        const barcodeContainer = document.getElementById("barcode-container");
+        const allOptionInputs = document.querySelectorAll('.controls input, .controls select');
 
-    const validationRules = {
-        'CODE128': { regex: /.*/, message: '' }, // Can encode any character
-        'CODE39': { regex: /^[A-Z0-9-.$/+\s%*]*$/, message: 'CODE39 supports uppercase letters, numbers, and symbols: -.$/+%*' },
-        'EAN13': { regex: /^\d{12,13}$/, message: 'EAN-13 requires 12 or 13 digits.' },
-        'EAN8': { regex: /^\d{7,8}$/, message: 'EAN-8 requires 7 or 8 digits.' },
-        'UPC': { regex: /^\d{11,12}$/, message: 'UPC requires 11 or 12 digits.' },
-        'ITF': { regex: /^\d+$/, message: 'ITF requires an even number of digits.' },
-        'MSI': { regex: /^\d+$/, message: 'MSI supports only digits.' },
-    };
+        const validationRules = {
+            'CODE128': { regex: /.*/, message: '' },
+            'CODE39': { regex: /^[A-Z0-9-.$/+\s%*]*$/, message: 'Supports uppercase, numbers, and symbols: -.$/+%*' },
+            'EAN13': { regex: /^\d{12,13}$/, message: 'Requires 12 or 13 digits.' },
+            'EAN8': { regex: /^\d{7,8}$/, message: 'Requires 7 or 8 digits.' },
+            'UPC': { regex: /^\d{11,12}$/, message: 'Requires 11 or 12 digits.' },
+            'ITF': { regex: /^\d+$/, message: 'Requires an even number of digits.' },
+            'MSI': { regex: /^\d+$/, message: 'Supports only digits.' },
+        };
 
-    allInputs.forEach(input => input.addEventListener('input', generateBarcode));
+        const checkValidation = () => {
+            const text = textInput.value;
+            const format = formatSelect.value;
 
-    function validateInput(text, format) {
-        if (!text) return { valid: false, message: 'Input data cannot be empty.' };
+            if (!text) {
+                validationMessage.textContent = 'Input data cannot be empty.';
+                return false;
+            }
 
-        const rule = validationRules[format];
-        if (!rule) return { valid: true };
-
-        if (!rule.regex.test(text)) {
-            return { valid: false, message: rule.message };
-        }
-        
-        // Special case for ITF
-        if (format === 'ITF' && text.length % 2 !== 0) {
-            return { valid: false, message: 'ITF requires an even number of digits.' };
-        }
-
-        return { valid: true };
-    }
-
-    function generateBarcode() {
-        const text = textInput.value;
-        const format = formatSelect.value;
-        
-        const { valid, message } = validateInput(text, format);
-
-        validationMessage.textContent = valid ? '' : message;
-        downloadBtn.disabled = !valid;
-        
-        if (!valid) {
-            document.getElementById('barcodeSvg').innerHTML = '';
-            return;
-        }
-
-        try {
-            const options = {
-                format: format,
-                lineColor: document.getElementById("lineColor").value,
-                background: document.getElementById("bgColor").value,
-                width: parseFloat(document.getElementById("barWidth").value),
-                height: parseInt(document.getElementById("barHeight").value),
-                displayValue: document.getElementById("displayValue").checked
-            };
-            JsBarcode("#barcodeSvg", text, options);
-            validationMessage.textContent = ''; // Clear message on success
-        } catch (e) {
-            validationMessage.textContent = e.message.replace("JsBarcode error: ", "");
-            downloadBtn.disabled = true;
-        }
-    }
-    
-    downloadBtn.addEventListener('click', () => {
-        const svg = document.getElementById("barcodeSvg");
-        const format = document.getElementById("download-format").value;
-        const serializer = new XMLSerializer();
-        const source = serializer.serializeToString(svg);
-
-        if (format === 'svg') {
-            const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
-            const url = URL.createObjectURL(blob);
-            triggerDownload(url, "barcode.svg");
-        } else { // PNG or JPEG
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-            const img = new Image();
+            const rule = validationRules[format];
+            if (rule && !rule.regex.test(text)) {
+                validationMessage.textContent = rule.message;
+                return false;
+            }
             
-            img.onload = () => {
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.fillStyle = document.getElementById("bgColor").value;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(img, 0, 0);
-                const url = canvas.toDataURL(`image/${format}`);
-                triggerDownload(url, `barcode.${format}`);
-            };
-            img.src = 'data:image/svg+xml;base64,' + btoa(source);
-        }
-    });
-    
-    function triggerDownload(url, filename) {
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        link.click();
-    }
+            if (format === 'ITF' && text.length % 2 !== 0) {
+                validationMessage.textContent = 'ITF requires an even number of digits.';
+                return false;
+            }
 
-    // Initial generation
-    textInput.value = "123456789012";
-    formatSelect.value = "EAN13";
-    generateBarcode();
+            validationMessage.textContent = '';
+            return true;
+        };
+        
+        const handleInputChange = () => {
+            const isValid = checkValidation();
+            generateBtn.disabled = !isValid;
+        };
+
+        textInput.addEventListener('input', handleInputChange);
+        formatSelect.addEventListener('change', handleInputChange);
+
+        generateBtn.addEventListener('click', () => {
+            if (checkValidation()) {
+                generateBarcode();
+            }
+        });
+
+        allOptionInputs.forEach(input => {
+            if (input !== textInput && input !== formatSelect) {
+                input.addEventListener('change', () => {
+                    if (downloadBtn.disabled === false) { // Re-generate only if there is a valid barcode
+                        generateBarcode();
+                    }
+                });
+            }
+        });
+
+        function generateBarcode() {
+            const text = textInput.value;
+            const format = formatSelect.value;
+            
+            if (!checkValidation()) {
+                barcodeContainer.classList.add('invalid');
+                return;
+            }
+
+            barcodeContainer.classList.remove('invalid');
+
+            try {
+                const options = {
+                    format: format,
+                    lineColor: document.getElementById("lineColor").value,
+                    background: document.getElementById("bgColor").value,
+                    width: parseFloat(document.getElementById("barWidth").value),
+                    height: parseInt(document.getElementById("barHeight").value),
+                    displayValue: document.getElementById("displayValue").checked
+                };
+                JsBarcode("#barcodeSvg", text, options);
+                downloadBtn.disabled = false;
+            } catch (e) {
+                validationMessage.textContent = e.message.replace("JsBarcode error: ", "");
+                downloadBtn.disabled = true;
+                barcodeContainer.classList.add('invalid');
+            }
+        }
+        
+        downloadBtn.addEventListener('click', () => {
+            const svg = document.getElementById("barcodeSvg");
+            const format = document.getElementById("downloadFormat").value;
+            const serializer = new XMLSerializer();
+            const source = serializer.serializeToString(svg);
+
+            if (format === 'svg') {
+                const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+                const url = URL.createObjectURL(blob);
+                triggerDownload(url, "barcode.svg");
+            } else {
+                const canvas = document.createElement("canvas");
+                const ctx = canvas.getContext("2d");
+                const img = new Image();
+                
+                img.onload = () => {
+                    // Set canvas size based on SVG viewBox for better scaling
+                    const viewBox = svg.getAttribute('viewBox').split(' ').map(Number);
+                    const svgWidth = viewBox[2];
+                    const svgHeight = viewBox[3];
+                    canvas.width = svgWidth;
+                    canvas.height = svgHeight;
+
+                    // Draw background color first
+                    ctx.fillStyle = document.getElementById("bgColor").value;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw the SVG image on top
+                    ctx.drawImage(img, 0, 0);
+
+                    const url = canvas.toDataURL(`image/${format}`);
+                    triggerDownload(url, `barcode.${format}`);
+                };
+                img.src = 'data:image/svg+xml;base64,' + btoa(source);
+            }
+        });
+        
+        function triggerDownload(url, filename) {
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initial generation
+        textInput.value = "123456789012";
+        formatSelect.value = "EAN13";
+        generateBarcode();
+        generateBtn.disabled = false;
+    });
   </script>
 </body>
 </html>
